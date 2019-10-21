@@ -13,5 +13,15 @@ public class Door : Exit
         this._sprite = Resources.Load<Sprite>("Sprites/DOOR");
     }
 
+    public override void update()
+    {
+        base.update();
+
+        if(this.open == true)
+        {
+            this._sprite = this._sprite = Resources.Load<Sprite>("Sprites/SPACE");
+        }
+    }
+
     // == EVENTS =============================================================================================================
 }

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Dollar : Collectible
+public class Dollar : Score
 {
     // == VAR & CONST ========================================================================================================
 
@@ -11,6 +11,7 @@ public class Dollar : Collectible
     public Dollar(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
         this._sprite = Resources.Load<Sprite>("Sprites/DOLLAR");
+        this._score = 100;
     }
 
     // == EVENTS =============================================================================================================

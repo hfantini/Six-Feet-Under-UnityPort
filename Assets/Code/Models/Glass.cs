@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Glass : Collectible
+public class Glass : Score
 {
     // == VAR & CONST ========================================================================================================
 
@@ -11,6 +11,7 @@ public class Glass : Collectible
     public Glass(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
         this._sprite = Resources.Load<Sprite>("Sprites/GLASS");
+        this._score = 200;
     }
 
     // == EVENTS =============================================================================================================

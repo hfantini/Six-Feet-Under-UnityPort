@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Concrete : Wall
+public class Concrete : Dirt
 {
     // == VAR & CONST ========================================================================================================
 

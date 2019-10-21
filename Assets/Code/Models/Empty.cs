@@ -11,6 +11,7 @@ public class Empty : Tile
     public Empty(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
         this._type = TileType.TYPE_STATIC;
+        this._sprite = Resources.Load<Sprite>("Sprites/SPACE");
     }
 
     // == EVENTS =============================================================================================================

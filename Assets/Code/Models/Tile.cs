@@ -11,7 +11,18 @@ public class Tile
     protected TileType _type = TileType.TYPE_UNKNOWN;
     protected Sprite _sprite = null;
     protected Vector2 _position = new Vector2(-1, -1);
- 
+    protected TileFaceDirection _faceDirection = TileFaceDirection.OFF;
+
+    public enum TileFaceDirection
+    {
+        OFF,
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    }
+
+
     public enum TileType
     {
         TYPE_UNKNOWN,
@@ -29,7 +40,6 @@ public class Tile
         DIRECTION_SE,
         DIRECTION_S,
         DIRECTION_SW
-
     }
 
     // == METHODS ============================================================================================================
@@ -47,11 +57,6 @@ public class Tile
 
     // == EVENTS =============================================================================================================
 
-    public virtual void onStepInside( Tile tile, TileDirection direction )
-    {
-
-    }
-
     // == GETTERS AND SETTERS ================================================================================================
 
     public TileType type
@@ -68,5 +73,10 @@ public class Tile
     {
         get { return this._position; }
         set { this._position = value; }
+    }
+
+    public TileFaceDirection faceDirection
+    {
+        get { return this._faceDirection; }
     }
 }

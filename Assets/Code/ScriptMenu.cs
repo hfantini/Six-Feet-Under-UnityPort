@@ -38,8 +38,8 @@ public class ScriptMenu : MonoBehaviour
         }
         else if (this._currentState == State.ST_NEWGAME)
         {
-            SessionData.level = 1;
-            SceneManager.LoadScene("SCENE_LOADING");
+            SessionData.configureNewGame();
+            SceneManager.LoadScene("SCENE_GAME");
         }
         else if (this._currentState == State.ST_CREDITS)
         {
