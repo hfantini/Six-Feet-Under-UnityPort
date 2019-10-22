@@ -12,6 +12,7 @@ public class Tile
     protected Sprite _sprite = null;
     protected Vector2 _position = new Vector2(-1, -1);
     protected TileFaceDirection _faceDirection = TileFaceDirection.OFF;
+    protected RollSide _currentRollSide = RollSide.NO_ROLL;
 
     public enum TileFaceDirection
     {
@@ -22,6 +23,14 @@ public class Tile
         DOWN
     }
 
+    public enum TileMovementDirection
+    {
+        NO_MOVEMENT,
+        LEFT,
+        RIGHT,
+        UP,
+        DOWN
+    }
 
     public enum TileType
     {
@@ -40,6 +49,13 @@ public class Tile
         DIRECTION_SE,
         DIRECTION_S,
         DIRECTION_SW
+    }
+
+    public enum RollSide
+    {
+        NO_ROLL,
+        LEFT,
+        RIGHT
     }
 
     // == METHODS ============================================================================================================

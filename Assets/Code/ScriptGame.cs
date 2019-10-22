@@ -13,14 +13,25 @@ public class ScriptGame : MonoBehaviour
 
     private const int TILE_SIZE_X = 64;
     private const int TILE_SIZE_Y = 64;
+    private const int DELAY_AFTER_DEATH = 3000;
+    private const int DELAY_COUNT_TIME_SCORE = 300;
+    private const int DELAY_AFTER_COUNT_TIME_SCORE = 300;
 
-    private GameState _currentGameState = GameState.LEVEL_PRESENTATION;
+    private GameState _currentGameState = GameState.START;
+    private int _levelDimX = 0;
+    private int _levelDimY = 0;
     private string _levelTitle = null;
+    private int _originalLevelGems = -1;
     private int _levelGems = -1;
+    private float _originalLevelTime = -1;
     private float _levelTime = -1;
     private float _levelTimeElapsed = 0;
+    private float _levelTimeLastScore = 0;
+    private float _levelTimeAfterScore = 0;
     private string _levelMusic = null;
     private bool _levelCompleted = false;
+    private bool _playerDied = false;
+    private float _playerDiedTime = 0;
     private bool _tileMapSyncBeforeStateChange = false;
     private List<string> _levelRawMap = new List<string>();
     private Tile[,] _levelMap = null;
@@ -46,11 +57,13 @@ public class ScriptGame : MonoBehaviour
 
     protected enum GameState
     {
+        START,
         LEVEL_PRESENTATION,
         PLAYING,
         PAUSE,
         DEATH,
-        COMPLETE
+        COMPLETE,
+        NEXT_LEVEL
     }
 
     // == METHODS ============================================================================================================
@@ -88,6 +101,17 @@ public class ScriptGame : MonoBehaviour
         }
     }
 
+    public void collectClock()
+    {
+        this._levelTime += 10;
+    }
+
+    public void killPlayer()
+    {
+        this._playerDied = true;
+        this._playerDiedTime = Time.time * 1000;
+    }
+
     public void completeLevel()
     {
         this._levelCompleted = true;
@@ -109,10 +133,12 @@ public class ScriptGame : MonoBehaviour
                     break;
 
                 case "GEMS":
+                    this._originalLevelGems = Convert.ToInt32(paramSplit[1]);
                     this._levelGems = Convert.ToInt32(paramSplit[1]);
                     break;
 
                 case "SECONDS":
+                    this._originalLevelTime = Convert.ToInt32(paramSplit[1]);
                     this._levelTime = Convert.ToInt32(paramSplit[1]);
                     break;
 
@@ -209,8 +235,16 @@ public class ScriptGame : MonoBehaviour
             this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
 
             // == LOAD DATA FROM LEVEL FILE
+            StreamReader reader = null;
 
-            StreamReader reader = new StreamReader(Application.dataPath + "/Levels/LEVEL" + SessionData.level + ".TXT");
+            if (SessionData.levelTest == false)
+            {
+                reader = new StreamReader(Application.dataPath + "/Levels/LEVEL" + SessionData.level + ".TXT");
+            }
+            else
+            {
+                reader = new StreamReader(Application.dataPath + "/Levels/LEVEL_TEST.TXT");
+            }
 
             while (!reader.EndOfStream)
             {
@@ -221,10 +255,10 @@ public class ScriptGame : MonoBehaviour
 
             if (this._levelRawMap.Count > 0)
             {
-                int dimX = this._levelRawMap[0].Length / 2;
-                int dimY = this._levelRawMap.Count;
+                this._levelDimX = this._levelRawMap[0].Length / 2;
+                this._levelDimY = this._levelRawMap.Count;
 
-                this._levelMap = new Tile[dimY, dimX];
+                this._levelMap = new Tile[this._levelDimY, this._levelDimX];
             }
 
             // == INITIALIZING MAP OBJECTS
@@ -268,7 +302,12 @@ public class ScriptGame : MonoBehaviour
 
     private void Update()
     {
-        if (_currentGameState == GameState.LEVEL_PRESENTATION)
+        if (_currentGameState == GameState.START)
+        {
+            this._playerDiedTime = 0;
+            this._currentGameState = GameState.LEVEL_PRESENTATION;
+        }
+        else if (_currentGameState == GameState.LEVEL_PRESENTATION)
         {
             this._currentGameState = GameState.PLAYING;
         }
@@ -324,10 +363,20 @@ public class ScriptGame : MonoBehaviour
                 }
             }
 
-            // == CHECKING FOR LEVEL COMPLETION
-            if(this._levelCompleted)
+            // == CHECKING FOR PLAYER KILLED
+            if (this._playerDied)
             {
-                if(this._tileMapSyncBeforeStateChange == false)
+                if (Time.time * 1000 - this._playerDiedTime > DELAY_AFTER_DEATH)
+                {
+                    this._currentGameState = GameState.DEATH;
+                }
+            }
+
+            // == CHECKING FOR LEVEL COMPLETION
+
+            if (this._levelCompleted)
+            {
+                if (this._tileMapSyncBeforeStateChange == false)
                 {
                     this._tileMapSyncBeforeStateChange = true;
                 }
@@ -340,8 +389,8 @@ public class ScriptGame : MonoBehaviour
             // == UPDATING ELAPSED TIME
 
             this._levelTimeElapsed += Time.deltaTime;
-            
-            if(this._levelTimeElapsed > 1)
+
+            if (this._levelTimeElapsed > 1)
             {
                 this._levelTime--;
                 this._levelTimeElapsed -= 1;
@@ -349,7 +398,7 @@ public class ScriptGame : MonoBehaviour
 
             // == HANDLING WITH TIMER CHECKPOINTS
 
-            if(this._levelTime < 0)
+            if (this._levelTime < 0 && !this._playerDied)
             {
                 this._currentGameState = GameState.DEATH;
             }
@@ -377,12 +426,69 @@ public class ScriptGame : MonoBehaviour
         }
         else if (_currentGameState == GameState.DEATH)
         {
-
+            if (SessionData.lives > 0)
+            {
+                SessionData.lives--;
+                SceneManager.LoadScene("SCENE_GAME");
+            }
+            else
+            {
+                SceneManager.LoadScene("SCENE_MENU");
+            }
         }
         else if (_currentGameState == GameState.COMPLETE)
         {
-            SessionData.level++;
-            SceneManager.LoadScene("SCENE_GAME");
+            if (this._levelTime > 0)
+            {
+                // COUNTING TIME SCORE
+                if (Time.time * 1000 - this._levelTimeLastScore > DELAY_COUNT_TIME_SCORE)
+                {
+                    if (this._levelTime > 60)
+                    {
+                        SessionData.score += 60 * 10;
+                        this._levelTime -= 60;
+                    }
+                    else if (this._levelTime < 60 && this._levelTime >= 10)
+                    {
+                        SessionData.score += 10 * 10;
+                        this._levelTime -= 10;
+                    }
+                    else
+                    {
+                        SessionData.score += 10;
+                        this._levelTime -= 1;
+                    }
+
+                    this._levelTimeLastScore = Time.time * 1000;
+                }
+            }
+            else
+            {
+                this._levelTimeAfterScore = Time.time * 1000;
+                this._currentGameState = GameState.NEXT_LEVEL;
+            }
+
+            // == UPDATING HUD
+
+            // GEMS
+            this._gameHudGems.text = this._levelGems.ToString();
+
+            // LIVES
+            this._gameHudMen.text = SessionData.lives.ToString();
+
+            // SCORE
+            this._gameHudScore.text = SessionData.score.ToString();
+
+            // TIME
+            this._gameHudTime.text = this._levelTime.ToString();
+        }
+        else if (_currentGameState == GameState.NEXT_LEVEL)
+        {
+            if (Time.time * 1000 - this._levelTimeAfterScore > DELAY_AFTER_COUNT_TIME_SCORE)
+            {
+                SessionData.level++;
+                SceneManager.LoadScene("SCENE_GAME");
+            }
         }
     }
 

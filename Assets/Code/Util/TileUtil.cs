@@ -68,23 +68,23 @@ public class TileUtil
                 break;
 
             case "C0":
-                retValue = Type.GetType("Ruby");
+                retValue = Type.GetType("RubyL");
                 break;
 
             case "C1":
-                retValue = Type.GetType("Emerald");
+                retValue = Type.GetType("EmeraldL");
                 break;
 
             case "C2":
-                retValue = Type.GetType("Sapphire");
+                retValue = Type.GetType("SapphireL");
                 break;
 
             case "C3":
-                retValue = Type.GetType("Diamond");
+                retValue = Type.GetType("DiamondL");
                 break;
 
             case "C4":
-                retValue = Type.GetType("Pearl");
+                retValue = Type.GetType("PearlL");
                 break;
 
             case "D0":
@@ -108,16 +108,24 @@ public class TileUtil
                 break;
 
             case "E0":
-                retValue = Type.GetType("Ruby");
+                retValue = Type.GetType("RubyR");
                 break;
 
             case "E1":
-                retValue = Type.GetType("Emerald");
+                retValue = Type.GetType("EmeraldR");
                 break;
 
             case "E2":
-                retValue = Type.GetType("Sapphire");
+                retValue = Type.GetType("SapphireR");
                 break;
+
+            case "E3":
+                retValue = Type.GetType("DiamondR");
+                break;
+
+            case "E4":
+                retValue = Type.GetType("PearlR");
+                break; break;
 
             case "K0":
                 retValue = Type.GetType("Clock");
@@ -156,43 +164,43 @@ public class TileUtil
                 break;
 
             case "r0":
-                retValue = Type.GetType("Rock1");
+                retValue = Type.GetType("Rock1L");
                 break;
 
             case "r1":
-                retValue = Type.GetType("Rock2");
+                retValue = Type.GetType("Rock2L");
                 break;
 
             case "r2":
-                retValue = Type.GetType("Rock3");
+                retValue = Type.GetType("Rock3L");
                 break;
 
             case "r3":
-                retValue = Type.GetType("Chrome");
+                retValue = Type.GetType("ChromeL");
                 break;
 
             case "r4":
-                retValue = Type.GetType("MarbleRock");
+                retValue = Type.GetType("MarbleRockL");
                 break;
 
             case "t0":
-                retValue = Type.GetType("Rock1");
+                retValue = Type.GetType("Rock1R");
                 break;
 
             case "t1":
-                retValue = Type.GetType("Rock2");
+                retValue = Type.GetType("Rock2R");
                 break;
 
             case "t2":
-                retValue = Type.GetType("Rock3");
+                retValue = Type.GetType("Rock3R");
                 break;
 
             case "t3":
-                retValue = Type.GetType("Chrome");
+                retValue = Type.GetType("ChromeR");
                 break;
 
             case "t4":
-                retValue = Type.GetType("MarbleRock");
+                retValue = Type.GetType("MarbleRockR");
                 break;
 
             case "X0":

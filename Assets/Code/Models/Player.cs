@@ -6,8 +6,14 @@ public class Player : Tile
 {
     // == VAR & CONST ========================================================================================================
 
+    protected const int ANIM_DELAY = 70;
     protected const int MOVEMENT_DELAY = 150;
-    protected float lastMovement = 0;
+    protected const int HEAVY_MOVE_EFFORT = 3;
+    protected float _lastAnim = 0;
+    protected float _lastMovement = 0;
+    protected int _moveHeavyEffortCount = 0;
+    protected int _currentAnimSeq = 0;
+    protected Sprite[] _animSpriteSeq;
 
     // == METHODS ============================================================================================================
 
@@ -15,7 +21,38 @@ public class Player : Tile
     {
         this._type = TileType.TYPE_DYNAMIC;
         this._faceDirection = TileFaceDirection.RIGHT;
-        this._sprite = Resources.Load<Sprite>("Sprites/WALK01");
+
+        this._currentAnimSeq = 0;
+        this._animSpriteSeq = new Sprite[]
+        {
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK01" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK02" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK03" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK04" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK05" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK06" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK07" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK08" ),
+            this._sprite = Resources.Load<Sprite>( "Sprites/WALK09" ),
+        };
+
+        this._sprite = this._animSpriteSeq[this._currentAnimSeq];
+    }
+
+    protected void updateAnimation()
+    {
+        if ((Time.time * 1000) - this._lastAnim > ANIM_DELAY)
+        {
+            this._currentAnimSeq++;
+
+            if (this._currentAnimSeq > this._animSpriteSeq.Length - 1)
+            {
+                this._currentAnimSeq = 0;
+            }
+
+            this._sprite = this._animSpriteSeq[this._currentAnimSeq];
+            this._lastAnim = Time.time * 1000;
+        }
     }
 
     public override void update()
@@ -23,40 +60,62 @@ public class Player : Tile
         base.update();
         bool move = false;
         Vector2 nextPos = Vector2.zero;
+        TileMovementDirection currentMovement = TileMovementDirection.NO_MOVEMENT;
 
-        // CHECK MOVIMENT
+        // CHECK MOVEMENT
 
-        if ( (Time.time * 1000) - lastMovement > MOVEMENT_DELAY)
+        if (Input.GetKey(KeyCode.LeftArrow))
         {
-            if (Input.GetKey(KeyCode.LeftArrow))
+            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
             {
                 move = true;
                 nextPos = this._position + new Vector2(-1, 0);
-                lastMovement = Time.time * 1000;
+                _lastMovement = Time.time * 1000;
                 this._faceDirection = TileFaceDirection.LEFT;
+                currentMovement = TileMovementDirection.LEFT;
             }
 
-            if (Input.GetKey(KeyCode.RightArrow))
+            this.updateAnimation();
+        }
+
+        if (Input.GetKey(KeyCode.RightArrow))
+        {
+            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
             {
                 move = true;
                 nextPos = this._position + new Vector2(1, 0);
-                lastMovement = Time.time * 1000;
+                _lastMovement = Time.time * 1000;
                 this._faceDirection = TileFaceDirection.RIGHT;
+                currentMovement = TileMovementDirection.RIGHT;
             }
 
-            if (Input.GetKey(KeyCode.UpArrow))
+            this.updateAnimation();
+        }
+
+        if (Input.GetKey(KeyCode.UpArrow))
+        {
+            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
             {
                 move = true;
                 nextPos = this._position + new Vector2(0, -1);
-                lastMovement = Time.time * 1000;
+                _lastMovement = Time.time * 1000;
+                currentMovement = TileMovementDirection.UP;
             }
 
-            if (Input.GetKey(KeyCode.DownArrow))
+            this.updateAnimation();
+        }
+
+        if (Input.GetKey(KeyCode.DownArrow))
+        {
+            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
             {
                 move = true;
                 nextPos = this._position + new Vector2(0, 1);
-                lastMovement = Time.time * 1000;
+                _lastMovement = Time.time * 1000;
+                currentMovement = TileMovementDirection.DOWN;
             }
+
+            this.updateAnimation();
         }
 
         // UPDATE MOVEMENT
@@ -76,6 +135,8 @@ public class Player : Tile
                         // LEVEL FINISHED
                         this._parent.completeLevel();
                     }
+
+                    this._moveHeavyEffortCount = 0;
                 }
                 else if (colisionTile is Collectible)
                 {
@@ -90,10 +151,54 @@ public class Player : Tile
                         SessionData.score += ((Score)colisionTile).score;
                         this._parent.setTilePosition(this, nextPos);
                     }
-                }
+                    else if( colisionTile is Clock )
+                    {
+                        this._parent.collectClock();
+                        this._parent.setTilePosition(this, nextPos);
+                    }
+                    else if (colisionTile is Power)
+                    {
+                        SessionData.lives++;
+                        this._parent.setTilePosition(this, nextPos);
+                    }
 
+                    this._moveHeavyEffortCount = 0;
+                }
+                else if (colisionTile is Heavy)
+                {
+                    if(this._moveHeavyEffortCount > HEAVY_MOVE_EFFORT)
+                    {
+                        // MOVE THE HEAVY OBJECT
+                        if (currentMovement == TileMovementDirection.RIGHT)
+                        {
+                            Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(1, 0) );
+
+                            if( moveSpace == null || moveSpace is Empty)
+                            {
+                                this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0) );
+                                this._parent.setTilePosition(this, this.position + new Vector2(1, 0) );
+                            }
+                        }
+                        else if (currentMovement == TileMovementDirection.LEFT)
+                        {
+                            Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(-1, 0));
+
+                            if (moveSpace == null || moveSpace is Empty)
+                            {
+                                this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
+                                this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
+                            }
+                        }
+
+                        // RESET THE COUNTER 
+                        this._moveHeavyEffortCount = 0;
+                    }
+
+                    this._moveHeavyEffortCount++;
+                }
                 else
                 {
+                    this._moveHeavyEffortCount = 0;
                     this._parent.setTilePosition(this, nextPos);
                 }
             }

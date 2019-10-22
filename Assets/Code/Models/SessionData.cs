@@ -5,7 +5,8 @@ using UnityEngine;
 
 public static class SessionData
 {
-    private static int _level = 7;
+    private static int _level = 1;
+    private static bool _levelTest = false;
     private static int _lives = 3;
     private static double _score = 0;
     private static Exception _lastException = null;
@@ -43,5 +44,10 @@ public static class SessionData
     {
         get { return _lastException; }
         set { _lastException = value;  }
+    }
+
+    public static bool levelTest
+    {
+        get { return _levelTest; }
     }
 }
