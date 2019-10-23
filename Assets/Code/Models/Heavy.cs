@@ -42,9 +42,24 @@ public class Heavy : Tile
                 }
                 else if (underTile is Enemy && this._isFalling == true)
                 {
-                    this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
+                    this._parent.deteleTileFromMap(position);
+                    this._parent.deleteDynamicTile(this);
 
-                    // ENEMY KILLED
+                    this._parent.deteleTileFromMap(underTile.position);
+                    this._parent.deleteDynamicTile(underTile);
+
+                    for( int countX = (int) underTile.position.x - 1; countX <= underTile.position.x + 1; countX++ )
+                    {
+                        for (int countY = (int) underTile.position.y - 1; countY <= underTile.position.y + 1; countY++)
+                        {
+                            Tile currentTile = this._parent.getTileOnPosition( new Vector2(countX, countY) );
+
+                            if(currentTile == null || currentTile is Dirt || currentTile is Empty)
+                            {
+                                this._parent.createTile("Ruby", new Vector2(countX, countY));
+                            }
+                        }
+                    }
                 }
                 else
                 {

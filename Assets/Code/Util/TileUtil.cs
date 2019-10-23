@@ -19,6 +19,45 @@ public class TileUtil
                 retValue = Type.GetType("Player");
                 break;
 
+            case "a0":
+                retValue = Type.GetType("Mole");
+                break;
+            case "a1":
+                retValue = Type.GetType("Beetle");
+                break;
+
+            case "a2":
+                retValue = Type.GetType("Devil");
+                break;
+
+            case "a3":
+                retValue = Type.GetType("Fly");
+                break;
+
+            case "a4":
+                retValue = Type.GetType("Frog");
+                break;
+
+            case "a5":
+                retValue = Type.GetType("Gopher");
+                break;
+
+            case "a6":
+                retValue = Type.GetType("Lizard");
+                break;
+
+            case "a7":
+                retValue = Type.GetType("Spider");
+                break;
+
+            case "a8":
+                retValue = Type.GetType("Turtle");
+                break;
+
+            case "a9":
+                retValue = Type.GetType("Wombat");
+                break;
+
             case " 0":
                 retValue = Type.GetType("Empty");
                 break;
@@ -33,6 +72,10 @@ public class TileUtil
 
             case ".2":
                 retValue = Type.GetType("Sand1");
+                break;
+
+            case ".3":
+                retValue = Type.GetType("Sand2");
                 break;
 
             case ".4":

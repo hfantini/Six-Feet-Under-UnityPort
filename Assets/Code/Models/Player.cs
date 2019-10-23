@@ -162,6 +162,8 @@ public class Player : Tile
                         this._parent.setTilePosition(this, nextPos);
                     }
 
+                    this._parent.deleteDynamicTile(colisionTile);
+
                     this._moveHeavyEffortCount = 0;
                 }
                 else if (colisionTile is Heavy)

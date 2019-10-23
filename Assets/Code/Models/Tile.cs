@@ -13,6 +13,7 @@ public class Tile
     protected Vector2 _position = new Vector2(-1, -1);
     protected TileFaceDirection _faceDirection = TileFaceDirection.OFF;
     protected RollSide _currentRollSide = RollSide.NO_ROLL;
+    protected bool _markedForExclusion = false;
 
     public enum TileFaceDirection
     {
@@ -94,5 +95,11 @@ public class Tile
     public TileFaceDirection faceDirection
     {
         get { return this._faceDirection; }
+    }
+
+    public bool markedForExclusion
+    {
+        get { return this._markedForExclusion; }
+        set { this._markedForExclusion = value; }
     }
 }

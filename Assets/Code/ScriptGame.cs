@@ -35,9 +35,18 @@ public class ScriptGame : MonoBehaviour
     private bool _tileMapSyncBeforeStateChange = false;
     private List<string> _levelRawMap = new List<string>();
     private Tile[,] _levelMap = null;
-    private List<Tile> _tileExitList = null;
+    private List<Tile> _tileDynamicList = null;
+    private List<Tile> _tileDynamicListForExclusion = null;
+    private List<Tile> _tileDynamicListForAddition = null;
+    private Tile _tilePlayer = null;
     private int[,] _gridSize = null;
     private MapCameraMode _mapCameraMode = MapCameraMode.UNKNOWN;
+    private float _gameAreaTileX = -1;
+    private float _gameAreaTileY = -1;
+    private Vector2 _scrollOffsetX = new Vector2(-1, -1);
+    private Vector2 _scrollOffsetY = new Vector2(-1, -1);
+    private float _gameAreaOffsetX = -1;
+    private float _gameAreaOffsetY = -1;
 
     private GameObject _gamePanel = null;
     private GameObject _gameHud = null;
@@ -70,8 +79,9 @@ public class ScriptGame : MonoBehaviour
 
     public void setTilePosition(Tile tile, Vector2 newPos)
     {
-        this._levelMap[(int)tile.position.y, (int)tile.position.x] = null;
-        this._levelMap[(int)newPos.y, (int)newPos.x] = tile;
+        this._levelMap[ (int) tile.position.y, (int) tile.position.x] = null;
+        this._levelMap[ (int) newPos.y, (int) newPos.x] = tile;
+
         tile.position = newPos;
     }
 
@@ -87,6 +97,31 @@ public class ScriptGame : MonoBehaviour
         return retValue;
     }
 
+    public void deteleTileFromMap( Vector2 pos )
+    {
+        this._levelMap[ (int) pos.y, (int) pos.x] = null;
+    }
+
+    public void createTile( String tileClass, Vector2 pos )
+    {
+        Tile tile = (Tile)Activator.CreateInstance(Type.GetType(tileClass), new object[] { this, new Vector2(pos.x, pos.y) });
+        this._levelMap[(int)pos.y, (int)pos.x] = tile;
+
+        if(tile.type == Tile.TileType.TYPE_DYNAMIC)
+        {
+            this._tileDynamicListForAddition.Add(tile);
+        }
+    }
+
+    public void deleteDynamicTile( Tile tile )
+    {
+        if(tile.type == Tile.TileType.TYPE_DYNAMIC)
+        {
+            tile.markedForExclusion = true;
+            this._tileDynamicListForExclusion.Add(tile);
+        }
+    }
+
     public void collectGem()
     {
         this._levelGems--;
@@ -94,9 +129,12 @@ public class ScriptGame : MonoBehaviour
         if(this._levelGems == 0)
         {
             // OPEN THE EXIT DOOR
-            foreach( Exit exit in this._tileExitList )
+            foreach( Tile tile in this._tileDynamicList )
             {
-                exit.open = true;
+                if (tile is Exit)
+                {
+                    ( (Exit) tile ).open = true;
+                }
             }
         }
     }
@@ -158,27 +196,28 @@ public class ScriptGame : MonoBehaviour
     {
         float gameAreaX = this._gamePanel.GetComponent<RectTransform>().rect.width;
         float gameAreaY = this._gamePanel.GetComponent<RectTransform>().rect.height;
-        float gameAreaTileX = (float)Math.Floor((Double)gameAreaX / (Double)TILE_SIZE_X);
-        float gameAreaTileY = (float)Math.Floor((Double)gameAreaY / (Double)TILE_SIZE_Y);
+
+        this._gameAreaTileX = (float)Math.Floor((Double)gameAreaX / (Double)TILE_SIZE_X);
+        this._gameAreaTileY = (float)Math.Floor((Double)gameAreaY / (Double)TILE_SIZE_Y);
 
         // DEFINE THE CAMERA MODE
 
-        if (_levelMap.GetLength(0) < gameAreaTileY && _levelMap.GetLength(1) < gameAreaTileX)
+        if (_levelMap.GetLength(0) < this._gameAreaTileY && _levelMap.GetLength(1) < this._gameAreaTileX)
         {
             this._mapCameraMode = MapCameraMode.NO_SCROLL;
         }
-        else if (_levelMap.GetLength(0) > gameAreaTileY && _levelMap.GetLength(1) > gameAreaTileX)
+        else if (_levelMap.GetLength(0) > this._gameAreaTileY && _levelMap.GetLength(1) > this._gameAreaTileX)
         {
             this._mapCameraMode = MapCameraMode.X_Y_SCROLL;
         }
         else
         {
-            if (_levelMap.GetLength(0) > gameAreaTileY)
+            if (_levelMap.GetLength(0) > this._gameAreaTileY)
             {
                 this._mapCameraMode = MapCameraMode.Y_SCROLL;
             }
 
-            if (_levelMap.GetLength(1) > gameAreaTileX)
+            if (_levelMap.GetLength(1) > this._gameAreaTileX)
             {
                 this._mapCameraMode = MapCameraMode.X_SCROLL;
             }
@@ -216,6 +255,63 @@ public class ScriptGame : MonoBehaviour
                 }
             }
         }
+        else if (this._mapCameraMode == MapCameraMode.X_Y_SCROLL)
+        {
+            // CALCULATING TILE OFFSET
+
+            // X
+
+            if ((this._gameAreaTileX - 1) % 2 == 0)
+            {
+                float value = (this._gameAreaTileX - 1) / 2;
+                this._scrollOffsetX = new Vector2(value, value);
+            }
+            else
+            {
+                double value = (this._gameAreaTileX - 1) / 2;
+                this._scrollOffsetX = new Vector2((float)Math.Ceiling(value), (float)Math.Floor(value));
+            }
+
+            // BORDER
+            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)TILE_SIZE_X) / 2;
+
+            // Y
+
+            if ((this._gameAreaTileY - 1) % 2 == 0)
+            {
+                float value = (this._gameAreaTileY - 1) / 2;
+                this._scrollOffsetY = new Vector2(value, value);
+            }
+            else
+            {
+                double value = (this._gameAreaTileY - 1) / 2;
+                this._scrollOffsetY = new Vector2((float)Math.Ceiling(value), (float)Math.Floor(value));
+            }
+
+            // BORDER
+            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)TILE_SIZE_Y) / 2;
+
+            // TILE CREATION
+
+            for (int countX = 0; countX < this._gameAreaTileX; countX++)
+            {
+                for (int countY = 0; countY < this._gameAreaTileY; countY++)
+                {
+                    GameObject obj = new GameObject();
+                    obj.name = "TILE_" + countX + "_" + countY;
+
+                    Image image = obj.AddComponent<Image>();
+                    image.color = new Color32(255, 255, 255, 255);
+
+                    obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+                    obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3( ( (countX * TILE_SIZE_X) + (TILE_SIZE_X / 2) ) + this._gameAreaOffsetX, ( (-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2) ) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
+                    obj.SetActive(true);
+                }
+            }
+        }
     }
 
     private void Start()
@@ -223,7 +319,9 @@ public class ScriptGame : MonoBehaviour
         try
         {
             // == INITIALIZATION
-            this._tileExitList = new List<Tile>();
+            this._tileDynamicList = new List<Tile>();
+            this._tileDynamicListForExclusion = new List<Tile>();
+            this._tileDynamicListForAddition = new List<Tile>();
 
             // == GETTING OBJECTS
             this._gamePanel = GameObject.Find("PNL_GAME");
@@ -279,9 +377,14 @@ public class ScriptGame : MonoBehaviour
 
                         // TRACKING SOME OBJECTS IN LISTS
 
-                        if (currentTile is Exit)
+                        if (currentTile.type == Tile.TileType.TYPE_DYNAMIC)
                         {
-                            this._tileExitList.Add(currentTile);
+                            this._tileDynamicList.Add(currentTile);
+
+                            if (currentTile is Player)
+                            {
+                                this._tilePlayer = currentTile;
+                            }
                         }
 
                         mapXCounter++;
@@ -313,52 +416,164 @@ public class ScriptGame : MonoBehaviour
         }
         else if (_currentGameState == GameState.PLAYING)
         {
-            for (int countY = 0; countY < _levelMap.GetLength(0); countY++)
+            // REMOVING TILE MARKED FOR EXCLUSION
+            foreach( Tile tile in this._tileDynamicListForExclusion )
             {
-                for (int countX = 0; countX < _levelMap.GetLength(1); countX++)
+                this._tileDynamicList.Remove(tile);
+            }
+
+            // ADDING TILE MARKED FOR INCLUSION
+            foreach (Tile tile in this._tileDynamicListForAddition)
+            {
+                this._tileDynamicList.Add(tile);
+            }
+
+            this._tileDynamicListForExclusion.Clear();
+            this._tileDynamicListForExclusion.Clear();
+
+            // UPDATING DYNAMIC TILES
+
+            foreach ( Tile tile in this._tileDynamicList )
+            {
+                if (!tile.markedForExclusion)
                 {
-                    Tile currentTile = _levelMap[countY, countX];
+                    tile.update();
+                }
+            }
 
-                    if (currentTile != null)
+            // UPDATING GAME VIEW
+
+            if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
+            {
+                for (int countY = 0; countY < _levelMap.GetLength(0); countY++)
+                {
+                    for (int countX = 0; countX < _levelMap.GetLength(1); countX++)
                     {
-                        // UPDATING TILE
+                        Tile currentTile = _levelMap[countY, countX];
 
-                        if (currentTile.type == Tile.TileType.TYPE_DYNAMIC)
+                        if (currentTile != null)
                         {
-                            currentTile.update();
+                            // UPDATING TILE FACE DIRECTION
+
+                            switch (currentTile.faceDirection)
+                            {
+                                case Tile.TileFaceDirection.LEFT:
+                                    GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
+                                    break;
+
+                                case Tile.TileFaceDirection.RIGHT:
+                                    GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+                                    break;
+
+                                case Tile.TileFaceDirection.UP:
+
+                                    break;
+
+                                case Tile.TileFaceDirection.DOWN:
+                                    break;
+                            }
+
+                            // UPDATING TILE IMAGE
+
+                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = currentTile.sprite;
+                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(255, 255, 255, 255);
                         }
-
-                        // UPDATING TILE FACE DIRECTION
-
-                        switch (currentTile.faceDirection)
+                        else
                         {
-                            case Tile.TileFaceDirection.LEFT:
-                                GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
-                                break;
+                            // EMPTY TILE
 
-                            case Tile.TileFaceDirection.RIGHT:
-                                GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(1, 1);
-                                break;
-
-                            case Tile.TileFaceDirection.UP:
-
-                                break;
-
-                            case Tile.TileFaceDirection.DOWN:
-                                break;
+                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = null;
+                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(0, 0, 0, 255);
                         }
-
-                        // UPDATING TILE IMAGE
-
-                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = currentTile.sprite;
-                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(255, 255, 255, 255);
                     }
-                    else
-                    {
-                        // EMPTY TILE
+                }
+            }
+            else if (this._mapCameraMode == MapCameraMode.X_Y_SCROLL)
+            {
+                Vector2 playerPos = this._tilePlayer.position;
 
-                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = null;
-                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                int startPosX = 0;
+                int startPosY = 0;
+                int endPosX = 0;
+                int endPosY = 0;
+
+                // X
+
+                if (playerPos.x - this._scrollOffsetX.x < 0)
+                {
+                    startPosX = 0;
+                    endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                }
+                else if (playerPos.x + this._scrollOffsetX.y > ( this._levelMap.GetLength(1) - 1) )
+                {
+                    startPosX = (this._levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                    endPosX = (this._levelMap.GetLength(1) - 1);
+                }
+                else
+                {
+                    startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
+                    endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
+                }
+
+                // Y
+
+                if (playerPos.y - this._scrollOffsetY.x < 0)
+                {
+                    startPosY = 0;
+                    endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                }
+                else if (playerPos.y + this._scrollOffsetY.y > ( this._levelMap.GetLength(0) - 1 ) )
+                {
+                    startPosY = (this._levelMap.GetLength(0) - 1) - (int) (this._scrollOffsetY.x + this._scrollOffsetY.y);
+                    endPosY = (this._levelMap.GetLength(0) - 1);
+                }
+                else
+                {
+                    startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
+                    endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
+                }
+
+                for (int countY = startPosY; countY <= endPosY; countY++)
+                {
+                    for (int countX = startPosX; countX <= endPosX; countX++)
+                    {
+                        Tile currentTile = _levelMap[countY, countX];
+                        GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + (countY - startPosY));
+
+                        if (currentTile != null)
+                        {
+                            // UPDATING TILE FACE DIRECTION
+
+                            switch (currentTile.faceDirection)
+                            {
+                                case Tile.TileFaceDirection.LEFT:
+                                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
+                                    break;
+
+                                case Tile.TileFaceDirection.RIGHT:
+                                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+                                    break;
+
+                                case Tile.TileFaceDirection.UP:
+
+                                    break;
+
+                                case Tile.TileFaceDirection.DOWN:
+                                    break;
+                            }
+
+                            // UPDATING TILE IMAGE
+
+                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                        }
+                        else
+                        {
+                            // EMPTY TILE
+
+                            gameTile.GetComponent<Image>().sprite = null;
+                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                        }
                     }
                 }
             }
