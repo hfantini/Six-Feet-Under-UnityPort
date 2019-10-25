@@ -7,7 +7,7 @@ public static class SessionData
 {
     private static int _level = 7;
     private static bool _levelTest = false;
-    private static int _lives = 3;
+    private static int _lives = 2;
     private static double _score = 0;
     private static Exception _lastException = null;
 
@@ -16,7 +16,7 @@ public static class SessionData
     public static void configureNewGame()
     {
         _level = 1;
-        _lives = 3;
+        _lives = 2;
         _score = 0;
     }
 

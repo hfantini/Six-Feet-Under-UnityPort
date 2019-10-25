@@ -20,42 +20,163 @@ public class TileUtil
                 break;
 
             case "a0":
-                retValue = Type.GetType("Mole");
+                retValue = Type.GetType("MoleD");
                 break;
+
             case "a1":
-                retValue = Type.GetType("Beetle");
+                retValue = Type.GetType("BeetleD");
                 break;
 
             case "a2":
-                retValue = Type.GetType("Devil");
+                retValue = Type.GetType("DevilD");
                 break;
 
             case "a3":
-                retValue = Type.GetType("Fly");
+                retValue = Type.GetType("FlyD");
                 break;
 
             case "a4":
-                retValue = Type.GetType("Frog");
+                retValue = Type.GetType("FrogD");
                 break;
 
             case "a5":
-                retValue = Type.GetType("Gopher");
+                retValue = Type.GetType("GopherD");
                 break;
 
             case "a6":
-                retValue = Type.GetType("Lizard");
+                retValue = Type.GetType("LizardD");
                 break;
 
             case "a7":
-                retValue = Type.GetType("Spider");
+                retValue = Type.GetType("SpiderD");
                 break;
 
             case "a8":
-                retValue = Type.GetType("Turtle");
+                retValue = Type.GetType("TurtleD");
                 break;
 
             case "a9":
-                retValue = Type.GetType("Wombat");
+                retValue = Type.GetType("WombatD");
+                break;
+
+            case "b0":
+                retValue = Type.GetType("MoleR");
+                break;
+
+            case "b1":
+                retValue = Type.GetType("BeetleR");
+                break;
+
+            case "b2":
+                retValue = Type.GetType("DevilR");
+                break;
+
+            case "b3":
+                retValue = Type.GetType("FlyR");
+                break;
+
+            case "b4":
+                retValue = Type.GetType("FrogR");
+                break;
+
+            case "b5":
+                retValue = Type.GetType("GopherR");
+                break;
+
+            case "b6":
+                retValue = Type.GetType("LizardR");
+                break;
+
+            case "b7":
+                retValue = Type.GetType("SpiderR");
+                break;
+
+            case "b8":
+                retValue = Type.GetType("TurtleR");
+                break;
+
+            case "b9":
+                retValue = Type.GetType("WombatR");
+                break;
+
+            case "c0":
+                retValue = Type.GetType("MoleU");
+                break;
+
+            case "c1":
+                retValue = Type.GetType("BeetleU");
+                break;
+
+            case "c2":
+                retValue = Type.GetType("DevilU");
+                break;
+            
+            case "c3":
+                retValue = Type.GetType("FlyU");
+                break;
+
+            case "c4":
+                retValue = Type.GetType("FrogU");
+                break;
+
+            case "c5":
+                retValue = Type.GetType("GopherU");
+                break;
+
+            case "c6":
+                retValue = Type.GetType("LizardU");
+                break;
+
+            case "c7":
+                retValue = Type.GetType("SpiderU");
+                break;
+
+            case "c8":
+                retValue = Type.GetType("TurtleU");
+                break;
+
+            case "c9":
+                retValue = Type.GetType("WombatU");
+                break;
+
+            case "d0":
+                retValue = Type.GetType("MoleL");
+                break;
+
+            case "d1":
+                retValue = Type.GetType("BeetleL");
+                break;
+
+            case "d2":
+                retValue = Type.GetType("DevilL");
+                break;
+
+            case "d3":
+                retValue = Type.GetType("FlyL");
+                break;
+
+            case "d4":
+                retValue = Type.GetType("FrogL");
+                break;
+
+            case "d5":
+                retValue = Type.GetType("GopherL");
+                break;
+
+            case "d6":
+                retValue = Type.GetType("LizardL");
+                break;
+
+            case "d7":
+                retValue = Type.GetType("SpiderL");
+                break;
+
+            case "d8":
+                retValue = Type.GetType("TurtleL");
+                break;
+
+            case "d9":
+                retValue = Type.GetType("WombatL");
                 break;
 
             case " 0":

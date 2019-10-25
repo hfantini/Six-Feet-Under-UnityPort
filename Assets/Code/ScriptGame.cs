@@ -314,6 +314,34 @@ public class ScriptGame : MonoBehaviour
         }
     }
 
+    private void updateTileDirection( Tile tile, GameObject gameTile )
+    {
+        if( tile is Player )
+        {
+            switch (tile.faceDirection)
+            {
+                case Tile.TileFaceDirection.LEFT:
+                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
+                    break;
+
+                case Tile.TileFaceDirection.RIGHT:
+                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+                    break;
+
+                case Tile.TileFaceDirection.UP:
+
+                    break;
+
+                case Tile.TileFaceDirection.DOWN:
+                    break;
+            }
+        }
+        else if (tile is Enemy)
+        {
+
+        }
+    }
+
     private void Start()
     {
         try
@@ -450,28 +478,13 @@ public class ScriptGame : MonoBehaviour
                     for (int countX = 0; countX < _levelMap.GetLength(1); countX++)
                     {
                         Tile currentTile = _levelMap[countY, countX];
+                        GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + countY);
 
                         if (currentTile != null)
                         {
                             // UPDATING TILE FACE DIRECTION
-
-                            switch (currentTile.faceDirection)
-                            {
-                                case Tile.TileFaceDirection.LEFT:
-                                    GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
-                                    break;
-
-                                case Tile.TileFaceDirection.RIGHT:
-                                    GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<RectTransform>().localScale = new Vector2(1, 1);
-                                    break;
-
-                                case Tile.TileFaceDirection.UP:
-
-                                    break;
-
-                                case Tile.TileFaceDirection.DOWN:
-                                    break;
-                            }
+                          
+                            updateTileDirection(currentTile, gameTile);
 
                             // UPDATING TILE IMAGE
 
@@ -544,23 +557,7 @@ public class ScriptGame : MonoBehaviour
                         {
                             // UPDATING TILE FACE DIRECTION
 
-                            switch (currentTile.faceDirection)
-                            {
-                                case Tile.TileFaceDirection.LEFT:
-                                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(-1, 1);
-                                    break;
-
-                                case Tile.TileFaceDirection.RIGHT:
-                                    gameTile.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
-                                    break;
-
-                                case Tile.TileFaceDirection.UP:
-
-                                    break;
-
-                                case Tile.TileFaceDirection.DOWN:
-                                    break;
-                            }
+                            updateTileDirection(currentTile, gameTile);
 
                             // UPDATING TILE IMAGE
 
