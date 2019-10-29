@@ -37,8 +37,8 @@ public class Gem : Collectible
                 {
                     // DEATH
 
+                    ((Player)underTile).kill(DeathType.CRUSH);
                     this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
-                    this._parent.killPlayer();
 
                 }
                 else if (underTile is Enemy && this._isFalling == true)

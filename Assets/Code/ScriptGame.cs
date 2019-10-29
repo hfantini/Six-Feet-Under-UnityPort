@@ -13,10 +13,9 @@ public class ScriptGame : MonoBehaviour
 
     private const int TILE_SIZE_X = 64;
     private const int TILE_SIZE_Y = 64;
-    private const int DELAY_AFTER_DEATH = 3000;
+    protected const int DELAY_AFTER_DEATH = 3000;
     private const int DELAY_COUNT_TIME_SCORE = 300;
     private const int DELAY_AFTER_COUNT_TIME_SCORE = 300;
-
     private GameState _currentGameState = GameState.START;
     private int _levelDimX = 0;
     private int _levelDimY = 0;
@@ -77,10 +76,22 @@ public class ScriptGame : MonoBehaviour
 
     // == METHODS ============================================================================================================
 
+    public bool isPlayerAlive()
+    {
+        bool retValue = true;
+
+        if( ( (Player) this._tilePlayer).elementLifeStatus != ElementLifeStatus.ALIVE )
+        {
+            retValue = false;
+        }
+
+        return retValue;
+    }
+
     public void setTilePosition(Tile tile, Vector2 newPos)
     {
-        this._levelMap[ (int) tile.position.y, (int) tile.position.x] = null;
-        this._levelMap[ (int) newPos.y, (int) newPos.x] = tile;
+        this._levelMap[(int)tile.position.y, (int)tile.position.x] = null;
+        this._levelMap[(int)newPos.y, (int)newPos.x] = tile;
 
         tile.position = newPos;
     }
@@ -97,25 +108,25 @@ public class ScriptGame : MonoBehaviour
         return retValue;
     }
 
-    public void deteleTileFromMap( Vector2 pos )
+    public void deteleTileFromMap(Vector2 pos)
     {
-        this._levelMap[ (int) pos.y, (int) pos.x] = null;
+        this._levelMap[(int)pos.y, (int)pos.x] = null;
     }
 
-    public void createTile( String tileClass, Vector2 pos )
+    public void createTile(String tileClass, Vector2 pos)
     {
         Tile tile = (Tile)Activator.CreateInstance(Type.GetType(tileClass), new object[] { this, new Vector2(pos.x, pos.y) });
         this._levelMap[(int)pos.y, (int)pos.x] = tile;
 
-        if(tile.type == Tile.TileType.TYPE_DYNAMIC)
+        if (tile.type == Tile.TileType.TYPE_DYNAMIC)
         {
-            this._tileDynamicListForAddition.Add(tile);
+            this._tileDynamicListForAddition.Insert(0, tile);
         }
     }
 
-    public void deleteDynamicTile( Tile tile )
+    public void deleteDynamicTile(Tile tile)
     {
-        if(tile.type == Tile.TileType.TYPE_DYNAMIC)
+        if (tile.type == Tile.TileType.TYPE_DYNAMIC)
         {
             tile.markedForExclusion = true;
             this._tileDynamicListForExclusion.Add(tile);
@@ -126,14 +137,14 @@ public class ScriptGame : MonoBehaviour
     {
         this._levelGems--;
 
-        if(this._levelGems == 0)
+        if (this._levelGems == 0)
         {
             // OPEN THE EXIT DOOR
-            foreach( Tile tile in this._tileDynamicList )
+            foreach (Tile tile in this._tileDynamicList)
             {
                 if (tile is Exit)
                 {
-                    ( (Exit) tile ).open = true;
+                    ((Exit)tile).open = true;
                 }
             }
         }
@@ -144,7 +155,7 @@ public class ScriptGame : MonoBehaviour
         this._levelTime += 10;
     }
 
-    public void killPlayer()
+    public void playerDied()
     {
         this._playerDied = true;
         this._playerDiedTime = Time.time * 1000;
@@ -305,7 +316,7 @@ public class ScriptGame : MonoBehaviour
 
                     obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
-                    obj.GetComponent<RectTransform>().localPosition = new Vector3( ( (countX * TILE_SIZE_X) + (TILE_SIZE_X / 2) ) + this._gameAreaOffsetX, ( (-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2) ) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
                     obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
@@ -314,9 +325,9 @@ public class ScriptGame : MonoBehaviour
         }
     }
 
-    private void updateTileDirection( Tile tile, GameObject gameTile )
+    private void updateTileDirection(Tile tile, GameObject gameTile)
     {
-        if( tile is Player )
+        if (tile is Player)
         {
             switch (tile.faceDirection)
             {
@@ -338,7 +349,33 @@ public class ScriptGame : MonoBehaviour
         }
         else if (tile is Enemy)
         {
+            switch (tile.faceDirection)
+            {
+                case Tile.TileFaceDirection.LEFT:
 
+                    gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 270);
+                    break;
+
+                case Tile.TileFaceDirection.RIGHT:
+
+                    gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 90);
+                    break;
+
+                case Tile.TileFaceDirection.UP:
+
+                    gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 180);
+                    break;
+
+                case Tile.TileFaceDirection.DOWN:
+
+                    gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 0);
+                    break;
+            }
+        }
+        else
+        {
+            gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 0);
+            gameTile.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
         }
     }
 
@@ -424,7 +461,7 @@ public class ScriptGame : MonoBehaviour
 
             prepareGamePanel();
         }
-        catch(Exception e)
+        catch (Exception e)
         {
             SessionData.lastException = e;
             SceneManager.LoadScene("SCENE_EXCEPTION");
@@ -445,7 +482,7 @@ public class ScriptGame : MonoBehaviour
         else if (_currentGameState == GameState.PLAYING)
         {
             // REMOVING TILE MARKED FOR EXCLUSION
-            foreach( Tile tile in this._tileDynamicListForExclusion )
+            foreach (Tile tile in this._tileDynamicListForExclusion)
             {
                 this._tileDynamicList.Remove(tile);
             }
@@ -461,10 +498,15 @@ public class ScriptGame : MonoBehaviour
 
             // UPDATING DYNAMIC TILES
 
-            foreach ( Tile tile in this._tileDynamicList )
+            foreach (Tile tile in this._tileDynamicList)
             {
                 if (!tile.markedForExclusion)
                 {
+                    if (tile is Player && this._playerDied)
+                    {
+                        continue;
+                    }
+
                     tile.update();
                 }
             }
@@ -483,7 +525,7 @@ public class ScriptGame : MonoBehaviour
                         if (currentTile != null)
                         {
                             // UPDATING TILE FACE DIRECTION
-                          
+
                             updateTileDirection(currentTile, gameTile);
 
                             // UPDATING TILE IMAGE
@@ -517,7 +559,7 @@ public class ScriptGame : MonoBehaviour
                     startPosX = 0;
                     endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
                 }
-                else if (playerPos.x + this._scrollOffsetX.y > ( this._levelMap.GetLength(1) - 1) )
+                else if (playerPos.x + this._scrollOffsetX.y > (this._levelMap.GetLength(1) - 1))
                 {
                     startPosX = (this._levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
                     endPosX = (this._levelMap.GetLength(1) - 1);
@@ -535,9 +577,9 @@ public class ScriptGame : MonoBehaviour
                     startPosY = 0;
                     endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
                 }
-                else if (playerPos.y + this._scrollOffsetY.y > ( this._levelMap.GetLength(0) - 1 ) )
+                else if (playerPos.y + this._scrollOffsetY.y > (this._levelMap.GetLength(0) - 1))
                 {
-                    startPosY = (this._levelMap.GetLength(0) - 1) - (int) (this._scrollOffsetY.x + this._scrollOffsetY.y);
+                    startPosY = (this._levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
                     endPosY = (this._levelMap.GetLength(0) - 1);
                 }
                 else
@@ -575,10 +617,15 @@ public class ScriptGame : MonoBehaviour
                 }
             }
 
-            // == CHECKING FOR PLAYER KILLED
+            // == CHECKING FOR PLAYER LIFE STATUS
             if (this._playerDied)
             {
-                if (Time.time * 1000 - this._playerDiedTime > DELAY_AFTER_DEATH)
+                if (this._tilePlayer != null)
+                {
+                    deleteDynamicTile(this._tilePlayer);
+                }
+
+                if( (Time.time * 1000) - this._playerDiedTime > DELAY_AFTER_DEATH )
                 {
                     this._currentGameState = GameState.DEATH;
                 }
@@ -705,4 +752,7 @@ public class ScriptGame : MonoBehaviour
     }
 
     // == EVENTS =============================================================================================================
+
+    // == GETTERS & SETTERS ==================================================================================================
+
 }

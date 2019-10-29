@@ -37,7 +37,7 @@ public class Heavy : Tile
                     // DEATH
 
                     this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
-                    this._parent.killPlayer();
+                    ((Player)underTile).kill(DeathType.CRUSH);
 
                 }
                 else if (underTile is Enemy && this._isFalling == true)

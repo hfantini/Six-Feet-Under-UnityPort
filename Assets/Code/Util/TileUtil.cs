@@ -295,6 +295,46 @@ public class TileUtil
                 retValue = Type.GetType("Clock");
                 break;
 
+            case "L0":
+                retValue = Type.GetType("Lava0");
+                break;
+
+            case "L1":
+                retValue = Type.GetType("Lava1");
+                break;
+
+            case "L2":
+                retValue = Type.GetType("Lava2");
+                break;
+
+            case "L3":
+                retValue = Type.GetType("Lava3");
+                break;
+
+            case "L4":
+                retValue = Type.GetType("Lava4");
+                break;
+
+            case "L5":
+                retValue = Type.GetType("Lava5");
+                break;
+
+            case "L6":
+                retValue = Type.GetType("Lava6");
+                break;
+
+            case "L7":
+                retValue = Type.GetType("Lava7");
+                break;
+
+            case "L8":
+                retValue = Type.GetType("Lava8");
+                break;
+
+            case "L9":
+                retValue = Type.GetType("Lava9");
+                break;
+
             case "N0":
                 retValue = Type.GetType("Power");
                 break;

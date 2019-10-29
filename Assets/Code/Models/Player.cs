@@ -9,11 +9,15 @@ public class Player : Tile
     protected const int ANIM_DELAY = 70;
     protected const int MOVEMENT_DELAY = 150;
     protected const int HEAVY_MOVE_EFFORT = 3;
+    protected bool _delayExplosion = true;
+    protected float _deathTime = 0;
     protected float _lastAnim = 0;
     protected float _lastMovement = 0;
     protected int _moveHeavyEffortCount = 0;
     protected int _currentAnimSeq = 0;
     protected Sprite[] _animSpriteSeq;
+    protected ElementLifeStatus _elementLifeStatus = ElementLifeStatus.ALIVE;
+    protected int _explodeCount = 1;
 
     // == METHODS ============================================================================================================
 
@@ -55,157 +59,215 @@ public class Player : Tile
         }
     }
 
+    public void kill( DeathType type )
+    {
+        if( type == DeathType.CRUSH )
+        {
+            this._elementLifeStatus = ElementLifeStatus.DEATH_CRUSH;
+        }
+        else if( type == DeathType.MELTED )
+        {
+            this._elementLifeStatus = ElementLifeStatus.DEATH_MELT;
+        }
+    }
+
     public override void update()
     {
         base.update();
-        bool move = false;
-        Vector2 nextPos = Vector2.zero;
-        TileMovementDirection currentMovement = TileMovementDirection.NO_MOVEMENT;
 
-        // CHECK MOVEMENT
-
-        if (Input.GetKey(KeyCode.LeftArrow))
+        if (this._elementLifeStatus == ElementLifeStatus.ALIVE)
         {
-            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+            bool move = false;
+            Vector2 nextPos = Vector2.zero;
+            TileMovementDirection currentMovement = TileMovementDirection.NO_MOVEMENT;
+
+            // CHECK MOVEMENT
+
+            if (Input.GetKey(KeyCode.LeftArrow))
             {
-                move = true;
-                nextPos = this._position + new Vector2(-1, 0);
-                _lastMovement = Time.time * 1000;
-                this._faceDirection = TileFaceDirection.LEFT;
-                currentMovement = TileMovementDirection.LEFT;
-            }
-
-            this.updateAnimation();
-        }
-
-        if (Input.GetKey(KeyCode.RightArrow))
-        {
-            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-            {
-                move = true;
-                nextPos = this._position + new Vector2(1, 0);
-                _lastMovement = Time.time * 1000;
-                this._faceDirection = TileFaceDirection.RIGHT;
-                currentMovement = TileMovementDirection.RIGHT;
-            }
-
-            this.updateAnimation();
-        }
-
-        if (Input.GetKey(KeyCode.UpArrow))
-        {
-            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-            {
-                move = true;
-                nextPos = this._position + new Vector2(0, -1);
-                _lastMovement = Time.time * 1000;
-                currentMovement = TileMovementDirection.UP;
-            }
-
-            this.updateAnimation();
-        }
-
-        if (Input.GetKey(KeyCode.DownArrow))
-        {
-            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-            {
-                move = true;
-                nextPos = this._position + new Vector2(0, 1);
-                _lastMovement = Time.time * 1000;
-                currentMovement = TileMovementDirection.DOWN;
-            }
-
-            this.updateAnimation();
-        }
-
-        // UPDATE MOVEMENT
-
-        if( move )
-        {
-            Tile colisionTile = this._parent.getTileOnPosition( nextPos );
-
-            if ( !( colisionTile is Wall ) )
-            {
-                if (colisionTile is Exit)
+                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
                 {
-                    if (((Exit)colisionTile).open)
-                    {
-                        this._parent.setTilePosition(this, nextPos);
-
-                        // LEVEL FINISHED
-                        this._parent.completeLevel();
-                    }
-
-                    this._moveHeavyEffortCount = 0;
+                    move = true;
+                    nextPos = this._position + new Vector2(-1, 0);
+                    _lastMovement = Time.time * 1000;
+                    this._faceDirection = TileFaceDirection.LEFT;
+                    currentMovement = TileMovementDirection.LEFT;
                 }
-                else if (colisionTile is Collectible)
+
+                this.updateAnimation();
+            }
+
+            if (Input.GetKey(KeyCode.RightArrow))
+            {
+                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
                 {
-                    if (colisionTile is Gem)
-                    {
-                        SessionData.score += ((Gem)colisionTile).score;
-                        this._parent.collectGem();
-                        this._parent.setTilePosition(this, nextPos);
-                    }
-                    else if (colisionTile is Score)
-                    {
-                        SessionData.score += ((Score)colisionTile).score;
-                        this._parent.setTilePosition(this, nextPos);
-                    }
-                    else if( colisionTile is Clock )
-                    {
-                        this._parent.collectClock();
-                        this._parent.setTilePosition(this, nextPos);
-                    }
-                    else if (colisionTile is Power)
-                    {
-                        SessionData.lives++;
-                        this._parent.setTilePosition(this, nextPos);
-                    }
-
-                    this._parent.deleteDynamicTile(colisionTile);
-
-                    this._moveHeavyEffortCount = 0;
+                    move = true;
+                    nextPos = this._position + new Vector2(1, 0);
+                    _lastMovement = Time.time * 1000;
+                    this._faceDirection = TileFaceDirection.RIGHT;
+                    currentMovement = TileMovementDirection.RIGHT;
                 }
-                else if (colisionTile is Heavy)
+
+                this.updateAnimation();
+            }
+
+            if (Input.GetKey(KeyCode.UpArrow))
+            {
+                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
                 {
-                    if(this._moveHeavyEffortCount > HEAVY_MOVE_EFFORT)
+                    move = true;
+                    nextPos = this._position + new Vector2(0, -1);
+                    _lastMovement = Time.time * 1000;
+                    currentMovement = TileMovementDirection.UP;
+                }
+
+                this.updateAnimation();
+            }
+
+            if (Input.GetKey(KeyCode.DownArrow))
+            {
+                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+                {
+                    move = true;
+                    nextPos = this._position + new Vector2(0, 1);
+                    _lastMovement = Time.time * 1000;
+                    currentMovement = TileMovementDirection.DOWN;
+                }
+
+                this.updateAnimation();
+            }
+
+            // UPDATE MOVEMENT
+
+            if (move)
+            {
+                Tile colisionTile = this._parent.getTileOnPosition(nextPos);
+
+                if (!(colisionTile is Wall))
+                {
+                    if (colisionTile is Exit)
                     {
-                        // MOVE THE HEAVY OBJECT
-                        if (currentMovement == TileMovementDirection.RIGHT)
+                        if (((Exit)colisionTile).open)
                         {
-                            Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(1, 0) );
+                            this._parent.setTilePosition(this, nextPos);
 
-                            if( moveSpace == null || moveSpace is Empty)
-                            {
-                                this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0) );
-                                this._parent.setTilePosition(this, this.position + new Vector2(1, 0) );
-                            }
-                        }
-                        else if (currentMovement == TileMovementDirection.LEFT)
-                        {
-                            Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(-1, 0));
-
-                            if (moveSpace == null || moveSpace is Empty)
-                            {
-                                this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
-                                this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
-                            }
+                            // LEVEL FINISHED
+                            this._parent.completeLevel();
                         }
 
-                        // RESET THE COUNTER 
                         this._moveHeavyEffortCount = 0;
                     }
+                    else if (colisionTile is Collectible)
+                    {
+                        if (colisionTile is Gem)
+                        {
+                            SessionData.score += ((Gem)colisionTile).score;
+                            this._parent.collectGem();
+                            this._parent.setTilePosition(this, nextPos);
+                        }
+                        else if (colisionTile is Score)
+                        {
+                            SessionData.score += ((Score)colisionTile).score;
+                            this._parent.setTilePosition(this, nextPos);
+                        }
+                        else if (colisionTile is Clock)
+                        {
+                            this._parent.collectClock();
+                            this._parent.setTilePosition(this, nextPos);
+                        }
+                        else if (colisionTile is Power)
+                        {
+                            SessionData.lives++;
+                            this._parent.setTilePosition(this, nextPos);
+                        }
 
-                    this._moveHeavyEffortCount++;
+                        this._parent.deleteDynamicTile(colisionTile);
+
+                        this._moveHeavyEffortCount = 0;
+                    }
+                    else if (colisionTile is Heavy)
+                    {
+                        if (this._moveHeavyEffortCount > HEAVY_MOVE_EFFORT)
+                        {
+                            // MOVE THE HEAVY OBJECT
+                            if (currentMovement == TileMovementDirection.RIGHT)
+                            {
+                                Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(1, 0));
+
+                                if (moveSpace == null || moveSpace is Empty)
+                                {
+                                    this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0));
+                                    this._parent.setTilePosition(this, this.position + new Vector2(1, 0));
+                                }
+                            }
+                            else if (currentMovement == TileMovementDirection.LEFT)
+                            {
+                                Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(-1, 0));
+
+                                if (moveSpace == null || moveSpace is Empty)
+                                {
+                                    this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
+                                    this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
+                                }
+                            }
+
+                            // RESET THE COUNTER 
+                            this._moveHeavyEffortCount = 0;
+                        }
+
+                        this._moveHeavyEffortCount++;
+                    }
+                    else
+                    {
+                        this._moveHeavyEffortCount = 0;
+                        this._parent.setTilePosition(this, nextPos);
+                    }
+                }
+            }
+        }
+        else if( this._elementLifeStatus == ElementLifeStatus.DEATH_CRUSH )
+        {
+            this._elementLifeStatus = ElementLifeStatus.DEATH;
+            this._deathTime = Time.time * 1000;
+        }
+        else if (this._elementLifeStatus == ElementLifeStatus.DEATH_MELT)
+        {
+            if ( (Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY )
+            {
+                if (this._explodeCount < 4)
+                {
+                    this._sprite = Resources.Load<Sprite>("Sprites/EXPLODE" + this._explodeCount);
+                    this._explodeCount++;
                 }
                 else
                 {
-                    this._moveHeavyEffortCount = 0;
-                    this._parent.setTilePosition(this, nextPos);
+                    if (!this._delayExplosion)
+                    {
+                        this._elementLifeStatus = ElementLifeStatus.DEATH;
+                        this._deathTime = Time.time * 1000;
+                    }
+                    else
+                    {
+                        this._sprite = Resources.Load<Sprite>("Sprites/SPACE");
+                        this._delayExplosion = false;
+                    }
                 }
+
+                this._lastMovement = Time.time * 1000;
             }
+        }
+        else if (this._elementLifeStatus == ElementLifeStatus.DEATH)
+        {
+            this._parent.playerDied();
         }
     }
 
     // == EVENTS =============================================================================================================
+
+    // == GETTERS & SETTERS ==================================================================================================
+
+    public ElementLifeStatus elementLifeStatus
+    {
+        get { return this._elementLifeStatus; }
+    }
 }
