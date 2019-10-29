@@ -10,7 +10,7 @@ public class Lava5 : Lava
 
     public Lava5(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
-        this._movementDelay = 500;
+        this._movementDelay = 1200;
     }
 
     // == EVENTS =============================================================================================================

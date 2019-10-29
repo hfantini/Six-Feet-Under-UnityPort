@@ -219,6 +219,10 @@ public class TileUtil
                 retValue = Type.GetType("Steel");
                 break;
 
+            case "B5":
+                retValue = Type.GetType("Wood");
+                break;
+
             case "B6":
                 retValue = Type.GetType("Snow");
                 break;

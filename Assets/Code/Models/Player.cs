@@ -224,15 +224,44 @@ public class Player : Tile
                     }
                 }
             }
+
+
+            if (Input.GetKey(KeyCode.Space))
+            {
+                // BOMB 
+                if(this._parent.levelBombs > 0)
+                {
+                    Vector2 frontVector = Vector2.zero;
+
+                    switch( this._faceDirection )
+                    {
+                        case TileFaceDirection.LEFT:
+                            frontVector = new Vector2(-1, 0);
+                            break;
+
+                        case TileFaceDirection.RIGHT:
+                            frontVector = new Vector2(1, 0);
+                            break;
+                    }
+
+                    Tile frontTile = this._parent.getTileOnPosition(this._position + frontVector);
+
+                    if(frontTile == null || frontTile is Empty)
+                    {
+                        this._parent.createTile("BombPlayer", this._position + frontVector);
+                        this._parent.useBomb();
+                    }
+                }
+            }
         }
-        else if( this._elementLifeStatus == ElementLifeStatus.DEATH_CRUSH )
+        else if (this._elementLifeStatus == ElementLifeStatus.DEATH_CRUSH)
         {
             this._elementLifeStatus = ElementLifeStatus.DEATH;
             this._deathTime = Time.time * 1000;
         }
         else if (this._elementLifeStatus == ElementLifeStatus.DEATH_MELT)
         {
-            if ( (Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY )
+            if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
             {
                 if (this._explodeCount < 4)
                 {

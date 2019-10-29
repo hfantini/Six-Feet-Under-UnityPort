@@ -22,6 +22,7 @@ public class ScriptGame : MonoBehaviour
     private string _levelTitle = null;
     private int _originalLevelGems = -1;
     private int _levelGems = -1;
+    private int _levelBombs = 0;
     private float _originalLevelTime = -1;
     private float _levelTime = -1;
     private float _levelTimeElapsed = 0;
@@ -53,6 +54,7 @@ public class ScriptGame : MonoBehaviour
     private Text _gameHudMen;
     private Text _gameHudTime;
     private Text _gameHudScore;
+    private Text _gameHudBomb;
 
     protected enum MapCameraMode
     {
@@ -155,6 +157,14 @@ public class ScriptGame : MonoBehaviour
         this._levelTime += 10;
     }
 
+    public void useBomb()
+    {
+        if( this._levelBombs > 0 )
+        {
+            this._levelBombs--;
+        }
+    }
+
     public void playerDied()
     {
         this._playerDied = true;
@@ -193,6 +203,10 @@ public class ScriptGame : MonoBehaviour
 
                 case "MIDI":
                     this._levelMusic = paramSplit[1];
+                    break;
+
+                case "BOMBS":
+                    this._levelBombs = Convert.ToInt32(paramSplit[1]);
                     break;
             }
         }
@@ -323,12 +337,55 @@ public class ScriptGame : MonoBehaviour
                 }
             }
         }
+        else if (this._mapCameraMode == MapCameraMode.X_SCROLL)
+        {
+            // CALCULATING TILE OFFSET
+
+            // X
+
+            if ((this._gameAreaTileX - 1) % 2 == 0)
+            {
+                float value = (this._gameAreaTileX - 1) / 2;
+                this._scrollOffsetX = new Vector2(value, value);
+            }
+            else
+            {
+                double value = (this._gameAreaTileX - 1) / 2;
+                this._scrollOffsetX = new Vector2((float)Math.Ceiling(value), (float)Math.Floor(value));
+            }
+
+            // BORDER
+            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)TILE_SIZE_X) / 2;
+
+            // TILE CREATION
+
+            for (int countX = 0; countX < this._gameAreaTileX; countX++)
+            {
+                for (int countY = 0; countY < this._levelMap.GetLength(0); countY++)
+                {
+                    GameObject obj = new GameObject();
+                    obj.name = "TILE_" + countX + "_" + countY;
+
+                    Image image = obj.AddComponent<Image>();
+                    image.color = new Color32(255, 255, 255, 255);
+
+                    obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+                    obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
+                    obj.SetActive(true);
+                }
+            }
+        }
     }
 
     private void updateTileDirection(Tile tile, GameObject gameTile)
     {
         if (tile is Player)
         {
+            gameTile.GetComponent<RectTransform>().eulerAngles = new Vector3(0, 0, 0);
+
             switch (tile.faceDirection)
             {
                 case Tile.TileFaceDirection.LEFT:
@@ -349,6 +406,8 @@ public class ScriptGame : MonoBehaviour
         }
         else if (tile is Enemy)
         {
+            gameTile.GetComponent<RectTransform>().localScale = new Vector2(1, 1);
+
             switch (tile.faceDirection)
             {
                 case Tile.TileFaceDirection.LEFT:
@@ -396,6 +455,7 @@ public class ScriptGame : MonoBehaviour
             this._gameHudMen = GameObject.Find("TXT_HUD_MEN").GetComponent<Text>();
             this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
             this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
+            this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
 
             // == LOAD DATA FROM LEVEL FILE
             StreamReader reader = null;
@@ -616,6 +676,59 @@ public class ScriptGame : MonoBehaviour
                     }
                 }
             }
+            else if (this._mapCameraMode == MapCameraMode.X_SCROLL)
+            {
+                Vector2 playerPos = this._tilePlayer.position;
+
+                int startPosX = 0;
+                int endPosX = 0;
+
+                // X
+
+                if (playerPos.x - this._scrollOffsetX.x < 0)
+                {
+                    startPosX = 0;
+                    endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                }
+                else if (playerPos.x + this._scrollOffsetX.y > (this._levelMap.GetLength(1) - 1))
+                {
+                    startPosX = (this._levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                    endPosX = (this._levelMap.GetLength(1) - 1);
+                }
+                else
+                {
+                    startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
+                    endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
+                }
+
+                for (int countY = 0; countY <= this._levelMap.GetLength(0) - 1; countY++)
+                {
+                    for (int countX = startPosX; countX <= endPosX; countX++)
+                    {
+                        Tile currentTile = _levelMap[countY, countX];
+                        GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + countY);
+
+                        if (currentTile != null)
+                        {
+                            // UPDATING TILE FACE DIRECTION
+
+                            updateTileDirection(currentTile, gameTile);
+
+                            // UPDATING TILE IMAGE
+
+                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                        }
+                        else
+                        {
+                            // EMPTY TILE
+
+                            gameTile.GetComponent<Image>().sprite = null;
+                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                        }
+                    }
+                }
+            }
 
             // == CHECKING FOR PLAYER LIFE STATUS
             if (this._playerDied)
@@ -672,6 +785,9 @@ public class ScriptGame : MonoBehaviour
 
             // SCORE
             this._gameHudScore.text = SessionData.score.ToString();
+
+            // BOMBS
+            this._gameHudBomb.text = this._levelBombs.ToString();
 
             // TIME
             if (this._levelTime >= 0)
@@ -755,4 +871,8 @@ public class ScriptGame : MonoBehaviour
 
     // == GETTERS & SETTERS ==================================================================================================
 
+    public int levelBombs
+    {
+        get { return this._levelBombs; }
+    }
 }

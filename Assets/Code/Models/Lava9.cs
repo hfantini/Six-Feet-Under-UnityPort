@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Lava8 : Lava
+public class Lava9 : Lava
 {
     // == VAR & CONST ========================================================================================================
 
     // == METHODS ============================================================================================================
 
-    public Lava8(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
+    public Lava9(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
-        this._movementDelay = 800;
+        this._movementDelay = 2000;
     }
 
     // == EVENTS =============================================================================================================
