@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Cooper : Wall
+public class PlayerFake : Wall
 {
     // == VAR & CONST ========================================================================================================
 
     // == METHODS ============================================================================================================
 
-    public Cooper(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
+    public PlayerFake(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
-        this._sprite = Resources.Load<Sprite>("Sprites/COOPER");
+        this._sprite = Resources.Load<Sprite>("Sprites/WALK00");
     }
 
     // == EVENTS =============================================================================================================

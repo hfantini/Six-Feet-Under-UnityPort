@@ -47,6 +47,10 @@ public class Gem : Collectible
 
                     // ENEMY KILLED
                 }
+                else if (underTile is Bomb && this._isFalling == true)
+                {
+                    ((Bomb)underTile).detonate();
+                }
                 else
                 {
                     // CHECKING FOR ROLLING SIDE

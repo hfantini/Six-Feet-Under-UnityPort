@@ -53,7 +53,7 @@ public class Spread : Tile
 
                 Tile colisionTile = this._parent.getTileOnPosition(this.position + movementVector);
 
-                if (!(colisionTile is Wall) && !(colisionTile is Exit) && !(colisionTile is Gem) && !(colisionTile is Dirt) && !(colisionTile is Spread))
+                if ( colisionTile != null && ( !(colisionTile is Wall) && !(colisionTile is Exit) && !(colisionTile is Gem) && !(colisionTile is Dirt) && !(colisionTile is Spread) ) )
                 {
                     if ( (colisionTile is Player) )
                     {

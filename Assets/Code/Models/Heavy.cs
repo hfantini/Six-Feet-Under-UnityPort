@@ -61,6 +61,10 @@ public class Heavy : Tile
                         }
                     }
                 }
+                else if( underTile is Bomb )
+                {
+                    ((Bomb)underTile).detonate();
+                }
                 else
                 {
                     // CHECKING FOR ROLLING SIDE

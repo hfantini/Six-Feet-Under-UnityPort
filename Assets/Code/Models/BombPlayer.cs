@@ -31,10 +31,9 @@ public class BombPlayer : Bomb
     {
         base.update();
 
-        if (this._detonate == false)
+        if ( this._detonate == false)
         {
-            // BOMB DETONATION BY TIME
-            if ((Time.time * 1000) - this._bombUseTime > BOMB_EXPLOSION_TIME)
+            if (this._isCollectible == false && (Time.time * 1000) - this._bombUseTime > BOMB_EXPLOSION_TIME)
             {
                 this._detonate = true;
                 this._bombDetonationAnimationTime = Time.time;
@@ -69,13 +68,17 @@ public class BombPlayer : Bomb
 
                     // BOMB ANIMATION
 
-                    if( this._bombAnimationCount > 3 )
+                    if (this._isCollectible == false)
                     {
-                        this._bombAnimationCount = 2;
-                    }
 
-                    this._sprite = Resources.Load<Sprite>("Sprites/BOMB" + this._bombAnimationCount);
-                    this._bombAnimationCount++;
+                        if (this._bombAnimationCount > 3)
+                        {
+                            this._bombAnimationCount = 2;
+                        }
+
+                        this._sprite = Resources.Load<Sprite>("Sprites/BOMB" + this._bombAnimationCount);
+                        this._bombAnimationCount++;
+                    }
 
                     this._bombLastMovement = Time.time * 1000;
                 }

@@ -137,16 +137,19 @@ public class ScriptGame : MonoBehaviour
 
     public void collectGem()
     {
-        this._levelGems--;
-
-        if (this._levelGems == 0)
+        if (this._levelGems > 0)
         {
-            // OPEN THE EXIT DOOR
-            foreach (Tile tile in this._tileDynamicList)
+            this._levelGems--;
+
+            if (this._levelGems == 0)
             {
-                if (tile is Exit)
+                // OPEN THE EXIT DOOR
+                foreach (Tile tile in this._tileDynamicList)
                 {
-                    ((Exit)tile).open = true;
+                    if (tile is Exit)
+                    {
+                        ((Exit)tile).open = true;
+                    }
                 }
             }
         }
@@ -163,6 +166,11 @@ public class ScriptGame : MonoBehaviour
         {
             this._levelBombs--;
         }
+    }
+
+    public void collectBomb()
+    {
+        this._levelBombs++;
     }
 
     public void playerDied()
@@ -227,7 +235,7 @@ public class ScriptGame : MonoBehaviour
 
         // DEFINE THE CAMERA MODE
 
-        if (_levelMap.GetLength(0) < this._gameAreaTileY && _levelMap.GetLength(1) < this._gameAreaTileX)
+        if (_levelMap.GetLength(0) <= this._gameAreaTileY && _levelMap.GetLength(1) <= this._gameAreaTileX)
         {
             this._mapCameraMode = MapCameraMode.NO_SCROLL;
         }
@@ -362,6 +370,47 @@ public class ScriptGame : MonoBehaviour
             for (int countX = 0; countX < this._gameAreaTileX; countX++)
             {
                 for (int countY = 0; countY < this._levelMap.GetLength(0); countY++)
+                {
+                    GameObject obj = new GameObject();
+                    obj.name = "TILE_" + countX + "_" + countY;
+
+                    Image image = obj.AddComponent<Image>();
+                    image.color = new Color32(255, 255, 255, 255);
+
+                    obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
+                    obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
+                    obj.SetActive(true);
+                }
+            }
+        }
+        else if (this._mapCameraMode == MapCameraMode.Y_SCROLL)
+        {
+            // CALCULATING TILE OFFSET
+
+            // Y
+
+            if ((this._gameAreaTileY - 1) % 2 == 0)
+            {
+                float value = (this._gameAreaTileY - 1) / 2;
+                this._scrollOffsetY = new Vector2(value, value);
+            }
+            else
+            {
+                double value = (this._gameAreaTileY - 1) / 2;
+                this._scrollOffsetY = new Vector2((float)Math.Ceiling(value), (float)Math.Floor(value));
+            }
+
+            // BORDER
+            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)TILE_SIZE_Y) / 2;
+
+            // TILE CREATION
+
+            for (int countX = 0; countX < this._levelMap.GetLength(1); countX++)
+            {
+                for (int countY = 0; countY < this._gameAreaTileY; countY++)
                 {
                     GameObject obj = new GameObject();
                     obj.name = "TILE_" + countX + "_" + countY;

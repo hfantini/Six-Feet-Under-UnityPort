@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class Grass : Dirt
+public class Grass : Wall
 {
     // == VAR & CONST ========================================================================================================
 

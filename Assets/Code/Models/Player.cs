@@ -155,7 +155,7 @@ public class Player : Tile
 
                 if (!outOfBounds && colisionTile != null)
                 {
-                    if (!(colisionTile is Wall))
+                    if ( !(colisionTile is Wall) )
                     {
                         if (colisionTile is Exit)
                         {
@@ -228,6 +228,17 @@ public class Player : Tile
                             }
 
                             this._moveHeavyEffortCount++;
+                        }
+                        else if( colisionTile is Bomb )
+                        {
+                            Bomb bomb = (Bomb)colisionTile;
+
+                            if(bomb.isCollectible)
+                            {
+                                this._parent.collectBomb();
+                                this._parent.deleteDynamicTile(bomb);
+                                this._parent.setTilePosition(this, nextPos);
+                            }
                         }
                         else
                         {

@@ -19,6 +19,10 @@ public class TileUtil
                 retValue = Type.GetType("Player");
                 break;
 
+            case "m0":
+                retValue = Type.GetType("PlayerFake");
+                break;
+
             case "a0":
                 retValue = Type.GetType("MoleD");
                 break;
@@ -203,6 +207,10 @@ public class TileUtil
                 retValue = Type.GetType("Concrete");
                 break;
 
+            case "B0":
+                retValue = Type.GetType("Copper");
+                break;
+
             case "B1":
                 retValue = Type.GetType("GoldVert");
                 break;
@@ -229,6 +237,10 @@ public class TileUtil
 
             case "B7":
                 retValue = Type.GetType("Brick1");
+                break;
+
+            case "B8":
+                retValue = Type.GetType("Grout");
                 break;
 
             case "B9":
@@ -369,6 +381,14 @@ public class TileUtil
 
             case "s4":
                 retValue = Type.GetType("MarbleRock");
+                break;
+
+            case "S0":
+                retValue = Type.GetType("BombCollect");
+                break;
+
+            case "T0":
+                retValue = Type.GetType("BombCollect");
                 break;
 
             case "r0":
