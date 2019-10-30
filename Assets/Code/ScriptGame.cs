@@ -92,7 +92,7 @@ public class ScriptGame : MonoBehaviour
 
     public void setTilePosition(Tile tile, Vector2 newPos)
     {
-        this._levelMap[(int)tile.position.y, (int)tile.position.x] = null;
+        createTile("Empty", new Vector2(tile.position.x, tile.position.y));
         this._levelMap[(int)newPos.y, (int)newPos.x] = tile;
 
         tile.position = newPos;
@@ -102,7 +102,7 @@ public class ScriptGame : MonoBehaviour
     {
         Tile retValue = null;
 
-        if (pos.y < this._levelMap.GetLength(0) && pos.x < this._levelMap.GetLength(1))
+        if ( ( pos.y >= 0 && pos.y < this._levelMap.GetLength(0) ) && ( pos.x >= 0 && pos.x < this._levelMap.GetLength(1) ) )
         {
             retValue = this._levelMap[(int)pos.y, (int)pos.x];
         }

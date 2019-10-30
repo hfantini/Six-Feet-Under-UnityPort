@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class SessionData
 {
-    private static int _level = 9;
+    private static int _level = 10;
     private static bool _levelTest = false;
     private static int _lives = 2;
     private static double _score = 0;

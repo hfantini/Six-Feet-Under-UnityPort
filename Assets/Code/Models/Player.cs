@@ -141,86 +141,99 @@ public class Player : Tile
 
             if (move)
             {
-                Tile colisionTile = this._parent.getTileOnPosition(nextPos);
+                bool outOfBounds = false;
+                Tile colisionTile = null;
 
-                if (!(colisionTile is Wall))
+                try
                 {
-                    if (colisionTile is Exit)
+                    colisionTile = this._parent.getTileOnPosition(nextPos);
+                }
+                catch( System.IndexOutOfRangeException e )
+                {
+                    outOfBounds = true;
+                }
+
+                if (!outOfBounds && colisionTile != null)
+                {
+                    if (!(colisionTile is Wall))
                     {
-                        if (((Exit)colisionTile).open)
+                        if (colisionTile is Exit)
                         {
-                            this._parent.setTilePosition(this, nextPos);
-
-                            // LEVEL FINISHED
-                            this._parent.completeLevel();
-                        }
-
-                        this._moveHeavyEffortCount = 0;
-                    }
-                    else if (colisionTile is Collectible)
-                    {
-                        if (colisionTile is Gem)
-                        {
-                            SessionData.score += ((Gem)colisionTile).score;
-                            this._parent.collectGem();
-                            this._parent.setTilePosition(this, nextPos);
-                        }
-                        else if (colisionTile is Score)
-                        {
-                            SessionData.score += ((Score)colisionTile).score;
-                            this._parent.setTilePosition(this, nextPos);
-                        }
-                        else if (colisionTile is Clock)
-                        {
-                            this._parent.collectClock();
-                            this._parent.setTilePosition(this, nextPos);
-                        }
-                        else if (colisionTile is Power)
-                        {
-                            SessionData.lives++;
-                            this._parent.setTilePosition(this, nextPos);
-                        }
-
-                        this._parent.deleteDynamicTile(colisionTile);
-
-                        this._moveHeavyEffortCount = 0;
-                    }
-                    else if (colisionTile is Heavy)
-                    {
-                        if (this._moveHeavyEffortCount > HEAVY_MOVE_EFFORT)
-                        {
-                            // MOVE THE HEAVY OBJECT
-                            if (currentMovement == TileMovementDirection.RIGHT)
+                            if (((Exit)colisionTile).open)
                             {
-                                Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(1, 0));
+                                this._parent.setTilePosition(this, nextPos);
 
-                                if (moveSpace == null || moveSpace is Empty)
-                                {
-                                    this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0));
-                                    this._parent.setTilePosition(this, this.position + new Vector2(1, 0));
-                                }
-                            }
-                            else if (currentMovement == TileMovementDirection.LEFT)
-                            {
-                                Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(-1, 0));
-
-                                if (moveSpace == null || moveSpace is Empty)
-                                {
-                                    this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
-                                    this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
-                                }
+                                // LEVEL FINISHED
+                                this._parent.completeLevel();
                             }
 
-                            // RESET THE COUNTER 
                             this._moveHeavyEffortCount = 0;
                         }
+                        else if (colisionTile is Collectible)
+                        {
+                            if (colisionTile is Gem)
+                            {
+                                SessionData.score += ((Gem)colisionTile).score;
+                                this._parent.collectGem();
+                                this._parent.setTilePosition(this, nextPos);
+                            }
+                            else if (colisionTile is Score)
+                            {
+                                SessionData.score += ((Score)colisionTile).score;
+                                this._parent.setTilePosition(this, nextPos);
+                            }
+                            else if (colisionTile is Clock)
+                            {
+                                this._parent.collectClock();
+                                this._parent.setTilePosition(this, nextPos);
+                            }
+                            else if (colisionTile is Power)
+                            {
+                                SessionData.lives++;
+                                this._parent.setTilePosition(this, nextPos);
+                            }
 
-                        this._moveHeavyEffortCount++;
-                    }
-                    else
-                    {
-                        this._moveHeavyEffortCount = 0;
-                        this._parent.setTilePosition(this, nextPos);
+                            this._parent.deleteDynamicTile(colisionTile);
+
+                            this._moveHeavyEffortCount = 0;
+                        }
+                        else if (colisionTile is Heavy)
+                        {
+                            if (this._moveHeavyEffortCount > HEAVY_MOVE_EFFORT)
+                            {
+                                // MOVE THE HEAVY OBJECT
+                                if (currentMovement == TileMovementDirection.RIGHT)
+                                {
+                                    Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(1, 0));
+
+                                    if (moveSpace is Empty)
+                                    {
+                                        this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0));
+                                        this._parent.setTilePosition(this, this.position + new Vector2(1, 0));
+                                    }
+                                }
+                                else if (currentMovement == TileMovementDirection.LEFT)
+                                {
+                                    Tile moveSpace = this._parent.getTileOnPosition(colisionTile.position + new Vector2(-1, 0));
+
+                                    if (moveSpace is Empty)
+                                    {
+                                        this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
+                                        this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
+                                    }
+                                }
+
+                                // RESET THE COUNTER 
+                                this._moveHeavyEffortCount = 0;
+                            }
+
+                            this._moveHeavyEffortCount++;
+                        }
+                        else
+                        {
+                            this._moveHeavyEffortCount = 0;
+                            this._parent.setTilePosition(this, nextPos);
+                        }
                     }
                 }
             }

@@ -9,6 +9,7 @@ public class Enemy : Tile
     protected const int MOVEMENT_DELAY = 150;
     protected float _lastMovement = 0;
     protected bool _disoriented = false;
+    bool playerCatch = false;
 
     // == METHODS ============================================================================================================
 
@@ -24,46 +25,48 @@ public class Enemy : Tile
 
         if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
         {
-            bool playerCatch = false;
-
+            
             // SCAN THE POSITION LOOKING FOR THE PLAYER
 
-            Tile leftTile = this._parent.getTileOnPosition( this._position + new Vector2(-1, 0) );
-            Tile rightTile = this._parent.getTileOnPosition( this._position + new Vector2(1, 0) );
-            Tile upTile = this._parent.getTileOnPosition( this._position + new Vector2(0, -1) );
-            Tile downTile = this._parent.getTileOnPosition( this._position + new Vector2(0, 1) );
-            Tile playerTile = null;
+            for( int countX = 0; countX < 4; countX++ )
+            {
+                Vector2 scanPositionVector = Vector2.zero;
 
-            if(leftTile is Player)
-            {
-                playerTile = leftTile;
-            }
-            else if(rightTile is Player)
-            {
-                playerTile = rightTile;
-            }
-            else if (upTile is Player)
-            {
-                playerTile = upTile;
-            }
-            else if (downTile is Player)
-            {
-                playerTile = downTile;
-            }
+                switch(countX)
+                {
+                    case 0:
+                        scanPositionVector = new Vector2(0, -1);
+                        break;
 
-            if (playerTile != null)
-            {
-                // PLAYER DEATH
+                    case 1:
+                        scanPositionVector = new Vector2(1, 0);
+                        break;
 
-                ( (Player) playerTile).kill( DeathType.CRUSH );
-                this._parent.setTilePosition(this, playerTile.position);
+                    case 2:
+                        scanPositionVector = new Vector2(0, 1);
+                        break;
 
-                playerCatch = true;
+                    case 3:
+                        scanPositionVector = new Vector2(-1, 0);
+                        break;
+                }
+
+                Tile currentTile = this._parent.getTileOnPosition( this._position + scanPositionVector);
+
+                if( currentTile != null && currentTile is Player )
+                {
+                    // PLAYER DEATH
+
+                    ( (Player)currentTile).kill(DeathType.CRUSH);
+                    this._parent.setTilePosition(this, currentTile.position);
+
+                    playerCatch = true;
+                }
             }
 
             // SCAN THE POSITION FOR THE PATH
 
-            if ( !playerCatch && this._parent.isPlayerAlive() )
+            if ( !playerCatch )
             {
                 Vector2 frontVectorPos = Vector2.zero;
                 Vector2 bottomVectorPos = Vector2.zero;
@@ -93,13 +96,13 @@ public class Enemy : Tile
 
                 Tile bottomTile = this._parent.getTileOnPosition(this._position + bottomVectorPos);
 
-                if( bottomTile != null && !(bottomTile is Empty) )
+                if(bottomTile == null || !(bottomTile is Empty) )
                 {
                     this._disoriented = false;
 
                     Tile frontTile = this._parent.getTileOnPosition(this._position + frontVectorPos);
 
-                    if( frontTile == null || frontTile is Empty )
+                    if( frontTile != null && frontTile is Empty)
                     {
                         this._parent.setTilePosition(this, this._position + frontVectorPos);
                     }

@@ -414,6 +414,14 @@ public class TileUtil
             case "X0":
                 retValue = Type.GetType("Door");
                 break;
+
+            case "x0":
+                retValue = Type.GetType("DoorInvisible");
+                break;
+
+            default:
+                retValue = Type.GetType("Unknown");
+                break;
         }
 
         return retValue;

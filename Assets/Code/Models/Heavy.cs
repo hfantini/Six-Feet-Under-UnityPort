@@ -25,7 +25,7 @@ public class Heavy : Tile
         {
             Tile underTile = this._parent.getTileOnPosition( this._position + new Vector2(0, 1) );
 
-            if(underTile == null || underTile is Empty)
+            if(underTile is Empty)
             {
                 this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
                 this._isFalling = true;
@@ -69,11 +69,11 @@ public class Heavy : Tile
                     {
                         Tile leftTile = this._parent.getTileOnPosition( this._position + new Vector2(-1, 0) );
 
-                        if( leftTile == null || leftTile is Empty )
+                        if( leftTile is Empty )
                         {
                             Tile bottomLeftTile = this._parent.getTileOnPosition(this._position + new Vector2(-1, 1));
 
-                            if (bottomLeftTile == null || bottomLeftTile is Empty)
+                            if (bottomLeftTile is Empty)
                             {
                                 this._parent.setTilePosition(this, this._position + new Vector2(-1, 0) );
                             }
@@ -91,11 +91,11 @@ public class Heavy : Tile
                     {
                         Tile rightTile = this._parent.getTileOnPosition(this._position + new Vector2(1, 0));
 
-                        if (rightTile == null || rightTile is Empty)
+                        if (rightTile is Empty)
                         {
                             Tile bottomRightTile = this._parent.getTileOnPosition(this._position + new Vector2(1, 1));
 
-                            if (bottomRightTile == null || bottomRightTile is Empty)
+                            if (bottomRightTile is Empty)
                             {
                                 this._parent.setTilePosition(this, this._position + new Vector2(1, 0));
                             }
