@@ -35,6 +35,7 @@ public class BombPlayer : Bomb
         {
             if (this._isCollectible == false && (Time.time * 1000) - this._bombUseTime > BOMB_EXPLOSION_TIME)
             {
+                this._parent.playSoundFX(SoundFX.EXPLOSIN);
                 this._detonate = true;
                 this._bombDetonationAnimationTime = Time.time;
             }
@@ -42,28 +43,22 @@ public class BombPlayer : Bomb
             {
                 if ((Time.time * 1000) - this._bombLastMovement > BOMB_MOVE_DELAY)
                 {
-                    try
-                    {
-                        Vector2 nextPosVector = new Vector2(0, 1);
-                        Tile nextTile = this._parent.getTileOnPosition(this._position + nextPosVector);
+                    Vector2 nextPosVector = new Vector2(0, 1);
+                    Tile nextTile = this._parent.getTileOnPosition(this._position + nextPosVector);
 
-                        if (nextTile == null || nextTile is Empty)
-                        {
-                            this._isFalling = true;
-                            this._parent.setTilePosition(this, this._position + nextPosVector);
-                        }
-                        else
-                        {
-                            if (this._isFalling)
-                            {
-                                this._detonate = true;
-                                this._bombDetonationAnimationTime = Time.time;
-                            }
-                        }
-                    }
-                    catch( System.IndexOutOfRangeException e )
+                    if (nextTile != null && nextTile is Empty)
                     {
-                        this._detonate = true;
+                        this._isFalling = true;
+                        this._parent.setTilePosition(this, this._position + nextPosVector);
+                    }
+                    else
+                    {
+                        if (this._isFalling)
+                        {
+                            this._parent.playSoundFX(SoundFX.EXPLOSIN);
+                            this._detonate = true;
+                            this._bombDetonationAnimationTime = Time.time;
+                        }
                     }
 
                     // BOMB ANIMATION
@@ -94,37 +89,30 @@ public class BombPlayer : Bomb
                 {
                     for (int countY = -1; countY <= 1; countY++)
                     {
-                        try
-                        {
-                            Tile tileInPos = this._parent.getTileOnPosition(this._position + new Vector2(countX, countY));
+                        Tile tileInPos = this._parent.getTileOnPosition(this._position + new Vector2(countX, countY));
 
-                            if (tileInPos != null && !(tileInPos is Empty))
+                        if (tileInPos != null && !(tileInPos is Empty))
+                        {
+                            if (!(tileInPos is Explosion))
                             {
-                                if (!(tileInPos is Explosion))
+                                if (tileInPos is Player)
                                 {
-                                    if (tileInPos is Player)
-                                    {
-                                        ((Player)tileInPos).kill(DeathType.MELTED);
-                                    }
-                                    else if (tileInPos is Bomb)
-                                    {
-                                        ((Bomb)tileInPos).detonate();
-                                    }
-                                    else
-                                    {
-                                        this._parent.deleteDynamicTile(tileInPos);
-                                        this._parent.createTile("Explosion", tileInPos.position);
-                                    }
+                                    ((Player)tileInPos).kill(DeathType.EXPLODED);
+                                }
+                                else if (tileInPos is Bomb)
+                                {
+                                    ((Bomb)tileInPos).detonate();
+                                }
+                                else
+                                {
+                                    this._parent.deleteDynamicTile(tileInPos);
+                                    this._parent.createTile("Explosion", tileInPos.position);
                                 }
                             }
-                            else
-                            {
-                                this._parent.createTile("Explosion", this._position + new Vector2(countX, countY));
-                            }
                         }
-                        catch( System.IndexOutOfRangeException e )
+                        else
                         {
-                            continue;
+                            this._parent.createTile("Explosion", this._position + new Vector2(countX, countY));
                         }
                     }
                 }

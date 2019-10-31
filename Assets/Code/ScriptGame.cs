@@ -56,6 +56,25 @@ public class ScriptGame : MonoBehaviour
     private Text _gameHudScore;
     private Text _gameHudBomb;
 
+    private AudioSource _musicSource;
+    private AudioSource _soundFxSource;
+
+    private AudioClip _musicLevelClip = null;
+    private AudioClip _sndFXBreak = null;
+    private AudioClip _sndFXChange = null;
+    private AudioClip _sndFXClock = null;
+    private AudioClip _sndFXDirt = null;
+    private AudioClip _sndFXExplosin = null;
+    private AudioClip _sndFXGate = null;
+    private AudioClip _sndFXGem = null;
+    private AudioClip _sndFXGrunt = null;
+    private AudioClip _sndFXHurry = null;
+    private AudioClip _sndFXLava = null;
+    private AudioClip _sndFXNewLife = null;
+    private AudioClip _sndFXRockFall = null;
+    private AudioClip _sndFXSlop = null;
+    private AudioClip _sndFXSlurp = null;
+
     protected enum MapCameraMode
     {
         UNKNOWN,
@@ -77,6 +96,115 @@ public class ScriptGame : MonoBehaviour
     }
 
     // == METHODS ============================================================================================================
+
+    public void playSoundFX( SoundFX soundFX )
+    {
+        switch( soundFX )
+        {
+            case SoundFX.BREAK:
+
+                this._soundFxSource.clip = this._sndFXBreak;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.CHANGE:
+
+                this._soundFxSource.clip = this._sndFXChange;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.CLOCK:
+
+                this._soundFxSource.clip = this._sndFXClock;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.DIRT:
+
+                this._soundFxSource.clip = this._sndFXDirt;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.EXPLOSIN:
+
+                this._soundFxSource.clip = this._sndFXExplosin;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.GATE:
+
+                this._soundFxSource.clip = this._sndFXGate;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.GEM:
+
+                this._soundFxSource.clip = this._sndFXGem;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.GRUNT:
+
+                this._soundFxSource.clip = this._sndFXGrunt;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.HURRY:
+
+                this._soundFxSource.clip = this._sndFXHurry;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.LAVA:
+
+                this._soundFxSource.clip = this._sndFXLava;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.NEWLIFE:
+
+                this._soundFxSource.clip = this._sndFXNewLife;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.ROCKFALL:
+
+                this._soundFxSource.clip = this._sndFXRockFall;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.SLOP:
+
+                this._soundFxSource.clip = this._sndFXSlop;
+                this._soundFxSource.Play();
+
+                break;
+
+            case SoundFX.SLURP:
+
+                this._soundFxSource.clip = this._sndFXSlurp;
+                this._soundFxSource.Play();
+
+                break;
+        }
+    }
+
+    public void stopSoundFX()
+    {
+
+    }
 
     public bool isPlayerAlive()
     {
@@ -148,6 +276,7 @@ public class ScriptGame : MonoBehaviour
                 {
                     if (tile is Exit)
                     {
+                        this.playSoundFX(SoundFX.GATE);
                         ((Exit)tile).open = true;
                     }
                 }
@@ -210,7 +339,8 @@ public class ScriptGame : MonoBehaviour
                     break;
 
                 case "MIDI":
-                    this._levelMusic = paramSplit[1];
+                    this._levelMusic = paramSplit[1].Replace("MIDI", "Music").Replace(".MID", "");
+                    this._musicLevelClip = Resources.Load<AudioClip>(this._levelMusic);
                     break;
 
                 case "BOMBS":
@@ -505,23 +635,53 @@ public class ScriptGame : MonoBehaviour
             this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
             this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
             this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
+            this._musicSource = GameObject.Find("MUSIC_AUDIO_SOURCE").GetComponent<AudioSource>();
+            this._soundFxSource = GameObject.Find("SOUNDFX_AUDIO_SOURCE").GetComponent<AudioSource>();
+
+            // == PREPARE OBJECTS
+            this._musicSource.loop = true;
+            this._soundFxSource.loop = false;
 
             // == LOAD DATA FROM LEVEL FILE
-            StreamReader reader = null;
+            String[] lines = null;
+            TextAsset txtAsset = null;
 
             if (SessionData.levelTest == false)
             {
-                reader = new StreamReader(Application.dataPath + "/Levels/LEVEL" + SessionData.level + ".TXT");
+                txtAsset = Resources.Load<TextAsset>("Levels/LEVEL" + SessionData.level);
+                
             }
             else
             {
-                reader = new StreamReader(Application.dataPath + "/Levels/LEVEL_TEST.TXT");
+                txtAsset = Resources.Load<TextAsset>("Levels/LEVEL_TEST");
             }
 
-            while (!reader.EndOfStream)
+            lines = txtAsset.text.Split('\n');
+
+            foreach( String line in lines)
             {
-                parseLineFromTXT(reader.ReadLine());
+                parseLineFromTXT( line.Replace("\r", "") );
             }
+
+            // == SOUNDFX CLIPS
+
+            this._sndFXBreak = Resources.Load<AudioClip>("SoundFX/BREAK");
+            this._sndFXChange = Resources.Load<AudioClip>("SoundFX/CHANGE");
+            this._sndFXClock = Resources.Load<AudioClip>("SoundFX/CLOCK");
+            this._sndFXDirt = Resources.Load<AudioClip>("SoundFX/DIRT");
+            this._sndFXExplosin = Resources.Load<AudioClip>("SoundFX/EXPLOSIN");
+            this._sndFXGate = Resources.Load<AudioClip>("SoundFX/GATE");
+            this._sndFXGem = Resources.Load<AudioClip>("SoundFX/GEM");
+            this._sndFXGrunt = Resources.Load<AudioClip>("SoundFX/GRUNT");
+            this._sndFXHurry = Resources.Load<AudioClip>("SoundFX/HURRY");
+            this._sndFXLava = Resources.Load<AudioClip>("SoundFX/LAVA");
+            this._sndFXNewLife = Resources.Load<AudioClip>("SoundFX/NEWLIFE");
+            this._sndFXRockFall = Resources.Load<AudioClip>("SoundFX/ROCKFALL");
+            this._sndFXSlop = Resources.Load<AudioClip>("SoundFX/SLOP");
+            this._sndFXSlurp = Resources.Load<AudioClip>("SoundFX/SLURP");
+
+            // == SET MUSIC
+            this._musicSource.clip = this._musicLevelClip;
 
             // == CALC MAP DIMENSIONS
 
@@ -586,6 +746,7 @@ public class ScriptGame : MonoBehaviour
         }
         else if (_currentGameState == GameState.LEVEL_PRESENTATION)
         {
+            this._musicSource.Play();
             this._currentGameState = GameState.PLAYING;
         }
         else if (_currentGameState == GameState.PLAYING)
@@ -778,6 +939,59 @@ public class ScriptGame : MonoBehaviour
                     }
                 }
             }
+            else if (this._mapCameraMode == MapCameraMode.Y_SCROLL)
+            {
+                Vector2 playerPos = this._tilePlayer.position;
+
+                int startPosY = 0;
+                int endPosY = 0;
+
+                // Y
+
+                if (playerPos.y - this._scrollOffsetY.x < 0)
+                {
+                    startPosY = 0;
+                    endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                }
+                else if (playerPos.y + this._scrollOffsetY.y > (this._levelMap.GetLength(0) - 1))
+                {
+                    startPosY = (this._levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                    endPosY = (this._levelMap.GetLength(0) - 1);
+                }
+                else
+                {
+                    startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
+                    endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
+                }
+
+                for (int countY = startPosY; countY <= endPosY; countY++)
+                {
+                    for (int countX = 0; countX <= this._levelMap.GetLength(1) - 1; countX++)
+                    {
+                        Tile currentTile = _levelMap[countY, countX];
+                        GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + (countY - startPosY));
+
+                        if (currentTile != null)
+                        {
+                            // UPDATING TILE FACE DIRECTION
+
+                            updateTileDirection(currentTile, gameTile);
+
+                            // UPDATING TILE IMAGE
+
+                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                        }
+                        else
+                        {
+                            // EMPTY TILE
+
+                            gameTile.GetComponent<Image>().sprite = null;
+                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                        }
+                    }
+                }
+            }
 
             // == CHECKING FOR PLAYER LIFE STATUS
             if (this._playerDied)
@@ -862,6 +1076,11 @@ public class ScriptGame : MonoBehaviour
         }
         else if (_currentGameState == GameState.COMPLETE)
         {
+            if(this._musicSource.isPlaying)
+            {
+                this._musicSource.Stop();
+            }
+
             if (this._levelTime > 0)
             {
                 // COUNTING TIME SCORE
@@ -869,16 +1088,19 @@ public class ScriptGame : MonoBehaviour
                 {
                     if (this._levelTime > 60)
                     {
+                        this.playSoundFX(SoundFX.CHANGE);
                         SessionData.score += 60 * 10;
                         this._levelTime -= 60;
                     }
                     else if (this._levelTime < 60 && this._levelTime >= 10)
                     {
+                        this.playSoundFX(SoundFX.CHANGE);
                         SessionData.score += 10 * 10;
                         this._levelTime -= 10;
                     }
                     else
                     {
+                        this.playSoundFX(SoundFX.CHANGE);
                         SessionData.score += 10;
                         this._levelTime -= 1;
                     }

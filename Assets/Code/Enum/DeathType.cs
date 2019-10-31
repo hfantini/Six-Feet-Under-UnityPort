@@ -7,5 +7,8 @@ using System.Threading.Tasks;
 public enum DeathType
 {
     CRUSH,
-    MELTED
+    GEMCRUSH,
+    MELTED,
+    EATEN,
+    EXPLODED
 }

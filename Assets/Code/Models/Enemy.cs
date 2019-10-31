@@ -57,7 +57,7 @@ public class Enemy : Tile
                 {
                     // PLAYER DEATH
 
-                    ( (Player)currentTile).kill(DeathType.CRUSH);
+                    ( (Player)currentTile).kill(DeathType.EATEN);
                     this._parent.setTilePosition(this, currentTile.position);
 
                     playerCatch = true;

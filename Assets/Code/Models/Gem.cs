@@ -10,6 +10,7 @@ public class Gem : Collectible
     protected const int MOVEMENT_DELAY = 150;
     protected float lastMovement = 0;
     protected bool _isFalling = false;
+    protected bool _anotherSoundTriggered = false;
 
     // == METHODS ============================================================================================================
 
@@ -37,15 +38,10 @@ public class Gem : Collectible
                 {
                     // DEATH
 
-                    ((Player)underTile).kill(DeathType.CRUSH);
+                    this._anotherSoundTriggered = true;
+                    ((Player)underTile).kill(DeathType.GEMCRUSH);
                     this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
 
-                }
-                else if (underTile is Enemy && this._isFalling == true)
-                {
-                    this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
-
-                    // ENEMY KILLED
                 }
                 else if (underTile is Bomb && this._isFalling == true)
                 {
@@ -53,6 +49,13 @@ public class Gem : Collectible
                 }
                 else
                 {
+                    Tile bottomTile = this._parent.getTileOnPosition(this._position + new Vector2(0, 1));
+
+                    if ((bottomTile is Wall || bottomTile is Heavy) && this._isFalling && !this._anotherSoundTriggered)
+                    {
+                        this._parent.playSoundFX( SoundFX.GEM );
+                    }
+
                     // CHECKING FOR ROLLING SIDE
 
                     if (this._currentRollSide == RollSide.LEFT)

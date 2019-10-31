@@ -9,6 +9,8 @@ public class Heavy : Tile
     protected const int MOVEMENT_DELAY = 150;
     protected float lastMovement = 0;
     protected bool _isFalling = false;
+    protected SoundFX _fallImpactSound = SoundFX.ROCKFALL;
+    protected bool _anotherSoundTriggered = false;
 
     // == METHODS ============================================================================================================
 
@@ -36,12 +38,16 @@ public class Heavy : Tile
                 {
                     // DEATH
 
-                    this._parent.setTilePosition(this, this._position + new Vector2(0, 1));
+                    this._parent.setTilePosition(this, this._position + new Vector2(0, 1));                    
+                    this._anotherSoundTriggered = true;
                     ((Player)underTile).kill(DeathType.CRUSH);
 
                 }
                 else if (underTile is Enemy && this._isFalling == true)
                 {
+                    this._parent.playSoundFX(SoundFX.EXPLOSIN);
+                    this._anotherSoundTriggered = true;
+
                     this._parent.deteleTileFromMap(position);
                     this._parent.deleteDynamicTile(this);
 
@@ -67,6 +73,18 @@ public class Heavy : Tile
                 }
                 else
                 {
+                    Tile bottomTile = this._parent.getTileOnPosition(this._position + new Vector2(0, 1));
+
+                    if ( (bottomTile is Wall || bottomTile is Heavy) && this._isFalling && !this._anotherSoundTriggered)
+                    {
+                        this._parent.playSoundFX(this._fallImpactSound);
+                    }
+
+                    if(this._anotherSoundTriggered)
+                    {
+                        this._anotherSoundTriggered = false;
+                    }
+
                     // CHECKING FOR ROLLING SIDE
 
                     if( this._currentRollSide == RollSide.LEFT )

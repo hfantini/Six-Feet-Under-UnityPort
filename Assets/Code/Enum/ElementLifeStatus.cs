@@ -9,5 +9,7 @@ public enum ElementLifeStatus
     ALIVE,
     DEATH_CRUSH,
     DEATH_MELT,
+    DEATH_EATEN,
+    DEATH_EXPLODED,
     DEATH
 }

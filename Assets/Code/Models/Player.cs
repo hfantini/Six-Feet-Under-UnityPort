@@ -59,13 +59,29 @@ public class Player : Tile
         }
     }
 
-    public void kill( DeathType type )
+    public void kill(DeathType type)
     {
-        if( type == DeathType.CRUSH )
+        if (type == DeathType.CRUSH)
         {
+            this._parent.playSoundFX(SoundFX.SLOP);
             this._elementLifeStatus = ElementLifeStatus.DEATH_CRUSH;
         }
-        else if( type == DeathType.MELTED )
+        else if (type == DeathType.GEMCRUSH)
+        {
+            this._parent.playSoundFX(SoundFX.BREAK);
+            this._elementLifeStatus = ElementLifeStatus.DEATH_CRUSH;
+        }
+        else if (type == DeathType.MELTED)
+        {
+            this._parent.playSoundFX(SoundFX.LAVA);
+            this._elementLifeStatus = ElementLifeStatus.DEATH_MELT;
+        }
+        else if (type == DeathType.EATEN)
+        {
+            this._parent.playSoundFX(SoundFX.SLURP);
+            this._elementLifeStatus = ElementLifeStatus.DEATH_EATEN;
+        }
+        else if (type == DeathType.EXPLODED)
         {
             this._elementLifeStatus = ElementLifeStatus.DEATH_MELT;
         }
@@ -81,60 +97,95 @@ public class Player : Tile
             Vector2 nextPos = Vector2.zero;
             TileMovementDirection currentMovement = TileMovementDirection.NO_MOVEMENT;
 
-            // CHECK MOVEMENT
+            // == GAME CONTROLS
+
+            PlayerControl pControl = PlayerControl.NONE;
+
+            // CHECK MOVEMENT: PC
 
             if (Input.GetKey(KeyCode.LeftArrow))
             {
-                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-                {
-                    move = true;
-                    nextPos = this._position + new Vector2(-1, 0);
-                    _lastMovement = Time.time * 1000;
-                    this._faceDirection = TileFaceDirection.LEFT;
-                    currentMovement = TileMovementDirection.LEFT;
-                }
-
+                pControl = PlayerControl.LEFT;
                 this.updateAnimation();
             }
 
             if (Input.GetKey(KeyCode.RightArrow))
             {
-                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-                {
-                    move = true;
-                    nextPos = this._position + new Vector2(1, 0);
-                    _lastMovement = Time.time * 1000;
-                    this._faceDirection = TileFaceDirection.RIGHT;
-                    currentMovement = TileMovementDirection.RIGHT;
-                }
-
+                pControl = PlayerControl.RIGHT;
                 this.updateAnimation();
             }
 
             if (Input.GetKey(KeyCode.UpArrow))
             {
-                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-                {
-                    move = true;
-                    nextPos = this._position + new Vector2(0, -1);
-                    _lastMovement = Time.time * 1000;
-                    currentMovement = TileMovementDirection.UP;
-                }
-
+                pControl = PlayerControl.UP;
                 this.updateAnimation();
             }
 
             if (Input.GetKey(KeyCode.DownArrow))
             {
-                if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
-                {
-                    move = true;
-                    nextPos = this._position + new Vector2(0, 1);
-                    _lastMovement = Time.time * 1000;
-                    currentMovement = TileMovementDirection.DOWN;
-                }
-
+                pControl = PlayerControl.DOWN;
                 this.updateAnimation();
+            }
+
+            // DETECTED PLAYER CONTROLS
+
+            switch(pControl)
+            {
+                case PlayerControl.LEFT:
+
+                    if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+                    {
+                        move = true;
+                        nextPos = this._position + new Vector2(-1, 0);
+                        _lastMovement = Time.time * 1000;
+                        this._faceDirection = TileFaceDirection.LEFT;
+                        currentMovement = TileMovementDirection.LEFT;
+                    }
+
+                    break;
+
+                case PlayerControl.RIGHT:
+
+                    if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+                    {
+                        move = true;
+                        nextPos = this._position + new Vector2(1, 0);
+                        _lastMovement = Time.time * 1000;
+                        this._faceDirection = TileFaceDirection.RIGHT;
+                        currentMovement = TileMovementDirection.RIGHT;
+                    }
+
+                    break;
+
+                case PlayerControl.UP:
+
+                    if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+                    {
+                        move = true;
+                        nextPos = this._position + new Vector2(0, -1);
+                        _lastMovement = Time.time * 1000;
+                        currentMovement = TileMovementDirection.UP;
+                    }
+
+                    break;
+
+                case PlayerControl.DOWN:
+
+                    if ((Time.time * 1000) - this._lastMovement > MOVEMENT_DELAY)
+                    {
+                        move = true;
+                        nextPos = this._position + new Vector2(0, 1);
+                        _lastMovement = Time.time * 1000;
+                        currentMovement = TileMovementDirection.DOWN;
+                    }
+
+                    break;
+
+                case PlayerControl.BOMB:
+
+                    pControl = PlayerControl.BOMB;
+                    
+                    break;
             }
 
             // UPDATE MOVEMENT
@@ -169,27 +220,36 @@ public class Player : Tile
 
                             this._moveHeavyEffortCount = 0;
                         }
+                        else if (colisionTile is Dirt)
+                        {
+                            this._parent.playSoundFX(SoundFX.DIRT);
+                            this._parent.setTilePosition(this, nextPos);
+                        }
                         else if (colisionTile is Collectible)
                         {
                             if (colisionTile is Gem)
                             {
                                 SessionData.score += ((Gem)colisionTile).score;
+                                this._parent.playSoundFX(SoundFX.GEM);
                                 this._parent.collectGem();
                                 this._parent.setTilePosition(this, nextPos);
                             }
                             else if (colisionTile is Score)
                             {
                                 SessionData.score += ((Score)colisionTile).score;
+                                this._parent.playSoundFX(SoundFX.GEM);
                                 this._parent.setTilePosition(this, nextPos);
                             }
                             else if (colisionTile is Clock)
                             {
                                 this._parent.collectClock();
+                                this._parent.playSoundFX(SoundFX.CLOCK);
                                 this._parent.setTilePosition(this, nextPos);
                             }
                             else if (colisionTile is Power)
                             {
                                 SessionData.lives++;
+                                this._parent.playSoundFX(SoundFX.NEWLIFE);
                                 this._parent.setTilePosition(this, nextPos);
                             }
 
@@ -208,6 +268,7 @@ public class Player : Tile
 
                                     if (moveSpace is Empty)
                                     {
+                                        this._parent.playSoundFX(SoundFX.GRUNT);
                                         this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(1, 0));
                                         this._parent.setTilePosition(this, this.position + new Vector2(1, 0));
                                     }
@@ -218,6 +279,7 @@ public class Player : Tile
 
                                     if (moveSpace is Empty)
                                     {
+                                        this._parent.playSoundFX(SoundFX.GRUNT);
                                         this._parent.setTilePosition(colisionTile, colisionTile.position + new Vector2(-1, 0));
                                         this._parent.setTilePosition(this, this.position + new Vector2(-1, 0));
                                     }
@@ -250,7 +312,7 @@ public class Player : Tile
             }
 
 
-            if (Input.GetKey(KeyCode.Space))
+            if ( pControl == PlayerControl.BOMB )
             {
                 // BOMB 
                 if(this._parent.levelBombs > 0)
@@ -308,6 +370,11 @@ public class Player : Tile
 
                 this._lastMovement = Time.time * 1000;
             }
+        }
+        else if (this._elementLifeStatus == ElementLifeStatus.DEATH_EATEN)
+        {
+            this._elementLifeStatus = ElementLifeStatus.DEATH;
+            this._deathTime = Time.time * 1000;
         }
         else if (this._elementLifeStatus == ElementLifeStatus.DEATH)
         {
