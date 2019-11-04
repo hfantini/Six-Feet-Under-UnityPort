@@ -39,7 +39,7 @@ public class ScriptMenu : MonoBehaviour
         else if (this._currentState == State.ST_NEWGAME)
         {
             SessionData.configureNewGame();
-            SceneManager.LoadScene("SCENE_GAME");
+            SceneManager.LoadScene("SCENE_LOADING");
         }
         else if (this._currentState == State.ST_CREDITS)
         {

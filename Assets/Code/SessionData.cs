@@ -15,7 +15,7 @@ public static class SessionData
 
     public static void configureNewGame()
     {
-        _level = 1;
+        _level = 8;
         _lives = 2;
         _score = 0;
     }

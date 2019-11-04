@@ -11,11 +11,12 @@ public class ScriptGame : MonoBehaviour
 {
     // == VAR & CONST ========================================================================================================
 
-    private const int TILE_SIZE_X = 64;
-    private const int TILE_SIZE_Y = 64;
     protected const int DELAY_AFTER_DEATH = 3000;
     private const int DELAY_COUNT_TIME_SCORE = 300;
     private const int DELAY_AFTER_COUNT_TIME_SCORE = 300;
+
+    private int _tileSizeX;
+    private int _tileSizeY;
     private GameState _currentGameState = GameState.START;
     private int _levelDimX = 0;
     private int _levelDimY = 0;
@@ -47,9 +48,13 @@ public class ScriptGame : MonoBehaviour
     private Vector2 _scrollOffsetY = new Vector2(-1, -1);
     private float _gameAreaOffsetX = -1;
     private float _gameAreaOffsetY = -1;
+    private bool _hurrytriggered = false;
 
     private GameObject _gamePanel = null;
     private GameObject _gameHud = null;
+    private GameObject _pnlControl = null;
+    private GameObject _btnDropBomb = null;
+    private Text _gameHudLevel;
     private Text _gameHudGems;
     private Text _gameHudMen;
     private Text _gameHudTime;
@@ -57,7 +62,7 @@ public class ScriptGame : MonoBehaviour
     private Text _gameHudBomb;
 
     private AudioSource _musicSource;
-    private AudioSource _soundFxSource;
+    private List<AudioSource> _soundFxSourceList;
 
     private AudioClip _musicLevelClip = null;
     private AudioClip _sndFXBreak = null;
@@ -99,103 +104,121 @@ public class ScriptGame : MonoBehaviour
 
     public void playSoundFX( SoundFX soundFX )
     {
+        AudioSource availableSource = null;
+
+        foreach( AudioSource source in this._soundFxSourceList )
+        {
+            if(!source.isPlaying)
+            {
+                availableSource = source;
+                break;
+            }
+        }
+
+        // IF ALL SOURCES ARE PLAYING WE GET THE FIRST ONE FROM THE LIST AS CANDIDATE.
+
+        if(availableSource == null)
+        {
+            availableSource = this._soundFxSourceList[0];
+        }
+
         switch( soundFX )
         {
             case SoundFX.BREAK:
 
-                this._soundFxSource.clip = this._sndFXBreak;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXBreak;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.CHANGE:
 
-                this._soundFxSource.clip = this._sndFXChange;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXChange;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.CLOCK:
 
-                this._soundFxSource.clip = this._sndFXClock;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXClock;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.DIRT:
 
-                this._soundFxSource.clip = this._sndFXDirt;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXDirt;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.EXPLOSIN:
 
-                this._soundFxSource.clip = this._sndFXExplosin;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXExplosin;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.GATE:
 
-                this._soundFxSource.clip = this._sndFXGate;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXGate;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.GEM:
 
-                this._soundFxSource.clip = this._sndFXGem;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXGem;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.GRUNT:
 
-                this._soundFxSource.clip = this._sndFXGrunt;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXGrunt;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.HURRY:
 
-                this._soundFxSource.clip = this._sndFXHurry;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXHurry;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.LAVA:
 
-                this._soundFxSource.clip = this._sndFXLava;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXLava;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.NEWLIFE:
 
-                this._soundFxSource.clip = this._sndFXNewLife;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXNewLife;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.ROCKFALL:
 
-                this._soundFxSource.clip = this._sndFXRockFall;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXRockFall;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.SLOP:
 
-                this._soundFxSource.clip = this._sndFXSlop;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXSlop;
+                availableSource.Play();
 
                 break;
 
             case SoundFX.SLURP:
 
-                this._soundFxSource.clip = this._sndFXSlurp;
-                this._soundFxSource.Play();
+                availableSource.clip = this._sndFXSlurp;
+                availableSource.Play();
 
                 break;
         }
@@ -360,8 +383,8 @@ public class ScriptGame : MonoBehaviour
         float gameAreaX = this._gamePanel.GetComponent<RectTransform>().rect.width;
         float gameAreaY = this._gamePanel.GetComponent<RectTransform>().rect.height;
 
-        this._gameAreaTileX = (float)Math.Floor((Double)gameAreaX / (Double)TILE_SIZE_X);
-        this._gameAreaTileY = (float)Math.Floor((Double)gameAreaY / (Double)TILE_SIZE_Y);
+        this._gameAreaTileX = (float)Math.Floor((Double)gameAreaX / (Double)this._tileSizeX);
+        this._gameAreaTileY = (float)Math.Floor((Double)gameAreaY / (Double)this._tileSizeY);
 
         // DEFINE THE CAMERA MODE
 
@@ -390,8 +413,8 @@ public class ScriptGame : MonoBehaviour
 
         if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
         {
-            float tileAreaY = this._levelMap.GetLength(0) * TILE_SIZE_Y;
-            float tileAreaX = this._levelMap.GetLength(1) * TILE_SIZE_X;
+            float tileAreaY = (this._levelMap.GetLength(0) - 1) * this._tileSizeY;
+            float tileAreaX = (this._levelMap.GetLength(1) - 1 ) * this._tileSizeX;
 
             float noUsedAreaY = gameAreaY - tileAreaY;
             float noUsedAreaX = gameAreaX - tileAreaX;
@@ -411,8 +434,8 @@ public class ScriptGame : MonoBehaviour
 
                     obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
-                    obj.GetComponent<RectTransform>().localPosition = new Vector3(offsetX + (countX * TILE_SIZE_X), -offsetY + (-countY * TILE_SIZE_Y));
-                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(offsetX + (countX * this._tileSizeX), -offsetY + (-countY * this._tileSizeY));
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
                 }
@@ -436,7 +459,7 @@ public class ScriptGame : MonoBehaviour
             }
 
             // BORDER
-            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)TILE_SIZE_X) / 2;
+            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)this._tileSizeX) / 2;
 
             // Y
 
@@ -452,7 +475,7 @@ public class ScriptGame : MonoBehaviour
             }
 
             // BORDER
-            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)TILE_SIZE_Y) / 2;
+            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)this._tileSizeY) / 2;
 
             // TILE CREATION
 
@@ -468,8 +491,8 @@ public class ScriptGame : MonoBehaviour
 
                     obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
-                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
-                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * this._tileSizeX) + (this._tileSizeX / 2)) + this._gameAreaOffsetX, ((-countY * this._tileSizeY) - (this._tileSizeY / 2)) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
                 }
@@ -493,7 +516,10 @@ public class ScriptGame : MonoBehaviour
             }
 
             // BORDER
-            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)TILE_SIZE_X) / 2;
+            this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)this._tileSizeX) / 2;
+
+            int totalTileY = this._levelMap.GetLength(0) * this._tileSizeY;
+            this._gameAreaOffsetY = (float)Math.Floor(((Double)gameAreaX - (Double)totalTileY) / 2);
 
             // TILE CREATION
 
@@ -509,8 +535,8 @@ public class ScriptGame : MonoBehaviour
 
                     obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
-                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
-                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * this._tileSizeX) + (this._tileSizeX / 2)) + this._gameAreaOffsetX, ((-countY * this._tileSizeY) - (this._tileSizeY / 2)) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
                 }
@@ -534,7 +560,11 @@ public class ScriptGame : MonoBehaviour
             }
 
             // BORDER
-            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)TILE_SIZE_Y) / 2;
+
+            int totalTileX = this._levelMap.GetLength(1) * this._tileSizeX;
+            this._gameAreaOffsetX = (float)Math.Floor( ( (Double) gameAreaX - (Double) totalTileX) / 2);
+
+            this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)this._tileSizeY) / 2;
 
             // TILE CREATION
 
@@ -550,8 +580,8 @@ public class ScriptGame : MonoBehaviour
 
                     obj.GetComponent<RectTransform>().pivot = new Vector2(0.5f, 0.5f);
                     obj.GetComponent<RectTransform>().SetParent(_gamePanel.transform);
-                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * TILE_SIZE_X) + (TILE_SIZE_X / 2)) + this._gameAreaOffsetX, ((-countY * TILE_SIZE_Y) - (TILE_SIZE_Y / 2)) - this._gameAreaOffsetY);
-                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(TILE_SIZE_X, TILE_SIZE_Y);
+                    obj.GetComponent<RectTransform>().localPosition = new Vector3(((countX * this._tileSizeX) + (this._tileSizeX / 2)) + this._gameAreaOffsetX, ((-countY * this._tileSizeY) - (this._tileSizeY / 2)) - this._gameAreaOffsetY);
+                    obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
                 }
@@ -625,22 +655,48 @@ public class ScriptGame : MonoBehaviour
             this._tileDynamicList = new List<Tile>();
             this._tileDynamicListForExclusion = new List<Tile>();
             this._tileDynamicListForAddition = new List<Tile>();
+            this._soundFxSourceList = new List<AudioSource>();
 
             // == GETTING OBJECTS
             this._gamePanel = GameObject.Find("PNL_GAME");
-
+            this._pnlControl = GameObject.Find("PNL_CONTROLS");
+            this._btnDropBomb = GameObject.Find("BTN_BOMB");
             this._gameHud = GameObject.Find("PNL_HUD");
+            this._gameHudLevel = GameObject.Find("TXT_HUD_LEVEL").GetComponent<Text>();
             this._gameHudGems = GameObject.Find("TXT_HUD_GEM").GetComponent<Text>();
             this._gameHudMen = GameObject.Find("TXT_HUD_MEN").GetComponent<Text>();
             this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
             this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
             this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
             this._musicSource = GameObject.Find("MUSIC_AUDIO_SOURCE").GetComponent<AudioSource>();
-            this._soundFxSource = GameObject.Find("SOUNDFX_AUDIO_SOURCE").GetComponent<AudioSource>();
+            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_1").GetComponent<AudioSource>() );
+            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_2").GetComponent<AudioSource>() );
+            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_3").GetComponent<AudioSource>() );
 
             // == PREPARE OBJECTS
             this._musicSource.loop = true;
-            this._soundFxSource.loop = false;
+
+            foreach (AudioSource source in this._soundFxSourceList)
+            {
+                source.loop = false;
+            }
+
+            // == DEFINE PLATFORM VALUES
+            if(Application.platform == RuntimePlatform.Android)
+            {
+                this._tileSizeX = 128;
+                this._tileSizeY = 128;
+    
+                this._pnlControl.SetActive(true);
+            }
+            else
+            {
+                this._tileSizeX = 64;
+                this._tileSizeY = 64;
+
+                this._pnlControl.SetActive(false);
+            }
+
 
             // == LOAD DATA FROM LEVEL FILE
             String[] lines = null;
@@ -1037,8 +1093,20 @@ public class ScriptGame : MonoBehaviour
             {
                 this._currentGameState = GameState.DEATH;
             }
+            else if( this._levelTime == 10 && !this._hurrytriggered )
+            {
+                this._hurrytriggered = true;
+                this.playSoundFX(SoundFX.HURRY);
+            }
+            else if( this._levelTime != 10 )
+            {
+                this._hurrytriggered = false;
+            }
 
             // == UPDATING HUD
+
+            // LEVEL
+            this._gameHudLevel.text = "LEVEL " + SessionData.level + " - " + this._levelTitle;
 
             // GEMS
             this._gameHudGems.text = this._levelGems.ToString();
@@ -1051,6 +1119,15 @@ public class ScriptGame : MonoBehaviour
 
             // BOMBS
             this._gameHudBomb.text = this._levelBombs.ToString();
+
+            if(this._levelBombs > 0)
+            {
+                this._btnDropBomb.SetActive(true);
+            }
+            else
+            {
+                this._btnDropBomb.SetActive(false);
+            }
 
             // TIME
             if (this._levelTime >= 0)
@@ -1133,12 +1210,16 @@ public class ScriptGame : MonoBehaviour
             if (Time.time * 1000 - this._levelTimeAfterScore > DELAY_AFTER_COUNT_TIME_SCORE)
             {
                 SessionData.level++;
-                SceneManager.LoadScene("SCENE_GAME");
+                SceneManager.LoadScene("SCENE_LOADING");
             }
         }
     }
 
     // == EVENTS =============================================================================================================
+    public void onBombClick()
+    {
+        ((Player)this._tilePlayer).playerControls.triggerBomb();
+    }
 
     // == GETTERS & SETTERS ==================================================================================================
 

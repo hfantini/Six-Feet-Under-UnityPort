@@ -18,6 +18,7 @@ public class Player : Tile
     protected Sprite[] _animSpriteSeq;
     protected ElementLifeStatus _elementLifeStatus = ElementLifeStatus.ALIVE;
     protected int _explodeCount = 1;
+    protected PlayerControls _playerControls;
 
     // == METHODS ============================================================================================================
 
@@ -41,6 +42,8 @@ public class Player : Tile
         };
 
         this._sprite = this._animSpriteSeq[this._currentAnimSeq];
+
+        this._playerControls = new PlayerControls();
     }
 
     protected void updateAnimation()
@@ -99,31 +102,10 @@ public class Player : Tile
 
             // == GAME CONTROLS
 
-            PlayerControl pControl = PlayerControl.NONE;
+            PlayerControl pControl = this._playerControls.readPlayerInput();
 
-            // CHECK MOVEMENT: PC
-
-            if (Input.GetKey(KeyCode.LeftArrow))
+            if( pControl != PlayerControl.NONE && pControl != PlayerControl.BOMB )
             {
-                pControl = PlayerControl.LEFT;
-                this.updateAnimation();
-            }
-
-            if (Input.GetKey(KeyCode.RightArrow))
-            {
-                pControl = PlayerControl.RIGHT;
-                this.updateAnimation();
-            }
-
-            if (Input.GetKey(KeyCode.UpArrow))
-            {
-                pControl = PlayerControl.UP;
-                this.updateAnimation();
-            }
-
-            if (Input.GetKey(KeyCode.DownArrow))
-            {
-                pControl = PlayerControl.DOWN;
                 this.updateAnimation();
             }
 
@@ -224,6 +206,10 @@ public class Player : Tile
                         {
                             this._parent.playSoundFX(SoundFX.DIRT);
                             this._parent.setTilePosition(this, nextPos);
+                        }
+                        else if (colisionTile is Lava)
+                        {
+                            kill(DeathType.MELTED);
                         }
                         else if (colisionTile is Collectible)
                         {
@@ -385,9 +371,13 @@ public class Player : Tile
     // == EVENTS =============================================================================================================
 
     // == GETTERS & SETTERS ==================================================================================================
-
     public ElementLifeStatus elementLifeStatus
     {
         get { return this._elementLifeStatus; }
+    }
+
+    public PlayerControls playerControls
+    {
+        get { return this._playerControls; }
     }
 }
