@@ -34,11 +34,14 @@ public class ScriptLoading : MonoBehaviour
         }
 
         this._asyncLoad = SceneManager.LoadSceneAsync("SCENE_GAME");
+        this._asyncLoad.allowSceneActivation = false;
 
         while (!_asyncLoad.isDone)
         {
             yield return null;
         }
+
+        SceneManager.LoadScene("SCENE_GAME");
     }
 
     void Update()

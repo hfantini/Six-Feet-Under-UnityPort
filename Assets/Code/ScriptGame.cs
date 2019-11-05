@@ -14,9 +14,13 @@ public class ScriptGame : MonoBehaviour
     protected const int DELAY_AFTER_DEATH = 3000;
     private const int DELAY_COUNT_TIME_SCORE = 300;
     private const int DELAY_AFTER_COUNT_TIME_SCORE = 300;
+    private const int DELAY_TRANSITION_OUT = 200;
+    private const int DELAY_TRANSITION_OUT_AFTER_COMPLETE = 1000;
 
     private int _tileSizeX;
     private int _tileSizeY;
+    private int _totalTilesInX;
+    private int _totalTilesInY;
     private GameState _currentGameState = GameState.START;
     private int _levelDimX = 0;
     private int _levelDimY = 0;
@@ -49,10 +53,18 @@ public class ScriptGame : MonoBehaviour
     private float _gameAreaOffsetX = -1;
     private float _gameAreaOffsetY = -1;
     private bool _hurrytriggered = false;
+    private float _delayTransitionOut = 0;
+    private float _delayTransitionOutAfterComplete = 0;
+    private bool _transitionOutComplete = false;
+    private List<List<GameObject>> _listOfAllObjectsTransition = null;
 
     private GameObject _gamePanel = null;
     private GameObject _gameHud = null;
+    private GameObject _gameStats = null;
+    private GameObject _pnlPause = null;
     private GameObject _pnlControl = null;
+    private GameObject _pnlOptions = null;
+    private GameObject _pnlConfirm = null;
     private GameObject _btnDropBomb = null;
     private Text _gameHudLevel;
     private Text _gameHudGems;
@@ -95,6 +107,8 @@ public class ScriptGame : MonoBehaviour
         LEVEL_PRESENTATION,
         PLAYING,
         PAUSE,
+        EXIT_CONFIRM,
+        EXIT_TO_MENU,
         DEATH,
         COMPLETE,
         NEXT_LEVEL
@@ -422,6 +436,11 @@ public class ScriptGame : MonoBehaviour
             float offsetY = noUsedAreaY / 2;
             float offsetX = noUsedAreaX / 2;
 
+            // TOTAL TILES IN SCREEN
+
+            this._totalTilesInX = this._levelMap.GetLength(1);
+            this._totalTilesInY = this._levelMap.GetLength(0);
+
             for (int countX = 0; countX < this._levelMap.GetLength(1); countX++)
             {
                 for (int countY = 0; countY < this._levelMap.GetLength(0); countY++)
@@ -438,6 +457,13 @@ public class ScriptGame : MonoBehaviour
                     obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
+
+                    // ANIMATIONS
+
+                    obj.AddComponent<Animator>();
+                    Animator animator = obj.GetComponent<Animator>();
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/ANIMC_PNL_TILE");
+
                 }
             }
         }
@@ -477,6 +503,11 @@ public class ScriptGame : MonoBehaviour
             // BORDER
             this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)this._tileSizeY) / 2;
 
+            // TOTAL TILES IN SCREEN
+
+            this._totalTilesInX = (int) this._gameAreaTileX;
+            this._totalTilesInY = (int) this._gameAreaTileY;
+
             // TILE CREATION
 
             for (int countX = 0; countX < this._gameAreaTileX; countX++)
@@ -495,6 +526,12 @@ public class ScriptGame : MonoBehaviour
                     obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
+
+                    // ANIMATIONS
+
+                    obj.AddComponent<Animator>();
+                    Animator animator = obj.GetComponent<Animator>();
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/ANIMC_PNL_TILE");
                 }
             }
         }
@@ -521,6 +558,11 @@ public class ScriptGame : MonoBehaviour
             int totalTileY = this._levelMap.GetLength(0) * this._tileSizeY;
             this._gameAreaOffsetY = (float)Math.Floor(((Double)gameAreaX - (Double)totalTileY) / 2);
 
+            // TOTAL TILES IN SCREEN
+
+            this._totalTilesInX = (int) this._gameAreaTileX;
+            this._totalTilesInY = this._levelMap.GetLength(0);
+
             // TILE CREATION
 
             for (int countX = 0; countX < this._gameAreaTileX; countX++)
@@ -539,6 +581,12 @@ public class ScriptGame : MonoBehaviour
                     obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
+
+                    // ANIMATIONS
+
+                    obj.AddComponent<Animator>();
+                    Animator animator = obj.GetComponent<Animator>();
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/ANIMC_PNL_TILE");
                 }
             }
         }
@@ -566,6 +614,11 @@ public class ScriptGame : MonoBehaviour
 
             this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)this._tileSizeY) / 2;
 
+            // TOTAL TILES IN SCREEN
+
+            this._totalTilesInX = this._levelMap.GetLength(1);
+            this._totalTilesInY = (int)this._gameAreaTileY;
+
             // TILE CREATION
 
             for (int countX = 0; countX < this._levelMap.GetLength(1); countX++)
@@ -584,6 +637,12 @@ public class ScriptGame : MonoBehaviour
                     obj.GetComponent<RectTransform>().sizeDelta = new Vector3(this._tileSizeX, this._tileSizeY);
                     obj.GetComponent<RectTransform>().localScale = new Vector3(1, 1);
                     obj.SetActive(true);
+
+                    // ANIMATIONS
+
+                    obj.AddComponent<Animator>();
+                    Animator animator = obj.GetComponent<Animator>();
+                    animator.runtimeAnimatorController = Resources.Load<RuntimeAnimatorController>("Animation/ANIMC_PNL_TILE");
                 }
             }
         }
@@ -668,6 +727,13 @@ public class ScriptGame : MonoBehaviour
             this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
             this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
             this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
+            this._gameStats = GameObject.Find("PNL_INFO");
+            this._pnlOptions = GameObject.Find("PNL_OPTION");
+            this._pnlOptions.SetActive(false);
+            this._pnlConfirm = GameObject.Find("PNL_CONFIRM");
+            this._pnlConfirm.SetActive(false);
+            this._pnlPause = GameObject.Find("PNL_PAUSE");
+            this._pnlPause.SetActive(false);
             this._musicSource = GameObject.Find("MUSIC_AUDIO_SOURCE").GetComponent<AudioSource>();
             this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_1").GetComponent<AudioSource>() );
             this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_2").GetComponent<AudioSource>() );
@@ -791,6 +857,140 @@ public class ScriptGame : MonoBehaviour
             SessionData.lastException = e;
             SceneManager.LoadScene("SCENE_EXCEPTION");
         }
+    }
+
+    private bool applyTransitionSceneOut()
+    {
+        bool retValue = true;
+
+        if (!this._transitionOutComplete)
+        {
+            if (this._delayTransitionOut == 0)
+            {
+                this._delayTransitionOut = Time.time * 1000;
+            }
+
+            if ((Time.time * 1000) - this._delayTransitionOut > DELAY_TRANSITION_OUT)
+            {
+                if (transitionSceneOut())
+                {
+                    this._transitionOutComplete = true;
+                    this._delayTransitionOutAfterComplete = Time.time * 1000;
+                }
+
+                this._delayTransitionOut = Time.time * 1000;
+            }
+        }
+        else
+        {
+            if ((Time.time * 1000) - this._delayTransitionOutAfterComplete > DELAY_TRANSITION_OUT_AFTER_COMPLETE)
+            {
+                retValue = false;
+            }
+        }
+
+        return retValue;
+    }
+    private bool transitionSceneOut()
+    {
+        bool retValue = true;
+
+        // == THIS METHOD EXECUTES ALL ANIMATION TO TRANSITION OUT THE SCENE. IT OCCURS WHEN PLAYER COMPLETES THE LEVEL OR EXIT TO MAIN MENU.
+
+        this._musicSource.Stop();
+        this._pnlPause.SetActive(false);
+
+        // == TRANSFORM THE BACKGROUND COLOR TO BLACK
+
+        Animator pnlGameAnimator = this._gamePanel.GetComponent<Animator>();
+
+        if(pnlGameAnimator.GetCurrentAnimatorStateInfo(0).IsName("STATE_BLACK"))
+        {
+            pnlGameAnimator.Play("TRANSITION_TO_GRAY");
+        }
+        else if ( !pnlGameAnimator.GetCurrentAnimatorStateInfo(0).IsName("STATE_GREY") )
+        {
+            retValue = false;
+        }
+
+        // == REMOVE TOP AND BOTTOM PANEL
+
+        // TOP
+
+        Animator pnlStatsAnimator = this._gameStats.GetComponent<Animator>();
+
+        if (pnlStatsAnimator.GetCurrentAnimatorStateInfo(0).IsName("STATE_SHOW"))
+        {
+            pnlStatsAnimator.Play("TRANSITION_TO_HIDE");
+        }
+        else if( !pnlStatsAnimator.GetCurrentAnimatorStateInfo(0).IsName("STATE_HIDE") )
+        {
+            retValue = false;
+        }
+
+        // BOTTOM
+
+        Animator pnlStatsHud = this._gameHud.GetComponent<Animator>();
+
+        if (pnlStatsHud.GetCurrentAnimatorStateInfo(0).IsName("STATE_SHOW"))
+        {
+            pnlStatsHud.Play("TRANSITION_TO_HIDE");
+        }
+        else if (!pnlStatsHud.GetCurrentAnimatorStateInfo(0).IsName("STATE_HIDE"))
+        {
+            retValue = false;
+        }
+
+        // == GRADUALY REMOVE THE GAME TILES
+
+        // CREATE LIST OF TILES BY COLUMN
+        if (this._listOfAllObjectsTransition == null)
+        {
+            this._listOfAllObjectsTransition = new List<List<GameObject>>();
+
+            for (int countX = 0; countX < this._totalTilesInX; countX++)
+            {
+                List<GameObject> colList = new List<GameObject>();
+
+                for (int countY = 0; countY < this._totalTilesInY; countY++)
+                {
+                    GameObject target = GameObject.Find("TILE_" + countX + "_" + countY);
+                    colList.Add(target);
+                }
+
+                this._listOfAllObjectsTransition.Add(colList);
+            }
+        }
+
+        // NOW WE LOOP OVER THE LIST REMOVING RAMDOMICALLY TILE BY COLUMNS
+
+        for (int countX = 0; countX < this._listOfAllObjectsTransition.Count; countX++)
+        {
+            List<GameObject> subList = this._listOfAllObjectsTransition[countX];
+
+            if (subList.Count > 0)
+            {
+                retValue = false;
+
+                int randomIndex = UnityEngine.Random.Range(0, subList.Count);
+
+                GameObject target = subList[randomIndex];
+                Animator animator = target.GetComponent<Animator>();
+
+                if (animator.GetCurrentAnimatorStateInfo(0).IsName("STATE_SHOW"))
+                {
+                    animator.Play("TRANSITION_TO_HIDE");
+                }
+
+                subList.RemoveAt(randomIndex);
+            }
+            else
+            {
+                continue;
+            }
+        }
+
+        return retValue;
     }
 
     private void Update()
@@ -1134,10 +1334,43 @@ public class ScriptGame : MonoBehaviour
             {
                 this._gameHudTime.text = this._levelTime.ToString();
             }
+
+            // CHECKING FOR PAUSE
+            if( Input.GetKeyDown(KeyCode.Escape) )
+            {
+                this._currentGameState = GameState.PAUSE;
+            }
+
+            this._pnlPause.SetActive(false); 
         }
         else if (_currentGameState == GameState.PAUSE)
         {
+            this._pnlPause.SetActive(true);
+            this._pnlOptions.SetActive(true);
+            this._pnlConfirm.SetActive(false);
 
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                this._currentGameState = GameState.PLAYING;
+            }
+        }
+        else if (_currentGameState == GameState.EXIT_CONFIRM)
+        {
+            this._pnlPause.SetActive(true);
+            this._pnlOptions.SetActive(false);
+            this._pnlConfirm.SetActive(true);
+
+            if (Input.GetKeyDown(KeyCode.Escape))
+            {
+                this._currentGameState = GameState.PAUSE;
+            }
+        }
+        else if (_currentGameState == GameState.EXIT_TO_MENU)
+        {
+            if( !applyTransitionSceneOut() )
+            {
+                SceneManager.LoadScene("SCENE_MENU");
+            }
         }
         else if (_currentGameState == GameState.DEATH)
         {
@@ -1148,7 +1381,10 @@ public class ScriptGame : MonoBehaviour
             }
             else
             {
-                SceneManager.LoadScene("SCENE_MENU");
+                if (!applyTransitionSceneOut())
+                {
+                    SceneManager.LoadScene("SCENE_MENU");
+                }
             }
         }
         else if (_currentGameState == GameState.COMPLETE)
@@ -1209,8 +1445,11 @@ public class ScriptGame : MonoBehaviour
         {
             if (Time.time * 1000 - this._levelTimeAfterScore > DELAY_AFTER_COUNT_TIME_SCORE)
             {
-                SessionData.level++;
-                SceneManager.LoadScene("SCENE_LOADING");
+                if (!applyTransitionSceneOut())
+                {
+                    SessionData.level++;
+                    SceneManager.LoadScene("SCENE_LOADING");
+                }
             }
         }
     }
@@ -1219,6 +1458,38 @@ public class ScriptGame : MonoBehaviour
     public void onBombClick()
     {
         ((Player)this._tilePlayer).playerControls.triggerBomb();
+    }
+
+    public void onResumeClick()
+    {
+        if (this._currentGameState == GameState.PAUSE)
+        {
+            this._currentGameState = GameState.PLAYING;
+        }
+    }
+
+    public void onMenuClick()
+    {
+        if (this._currentGameState == GameState.PAUSE)
+        {
+            this._currentGameState = GameState.EXIT_CONFIRM;
+        }
+    }
+
+    public void onConfirmYes()
+    {
+        if (this._currentGameState == GameState.EXIT_CONFIRM)
+        {
+            this._currentGameState = GameState.EXIT_TO_MENU;
+        }           
+    }
+
+    public void onConfirmNo()
+    {
+        if (this._currentGameState == GameState.EXIT_CONFIRM)
+        {
+            this._currentGameState = GameState.PAUSE;
+        }
     }
 
     // == GETTERS & SETTERS ==================================================================================================
