@@ -6,18 +6,35 @@ using UnityEngine;
 public static class SessionData
 {
     private static int _level = 1;
+    private static Tile[,] _levelMap = null;
     private static bool _levelTest = false;
     private static int _lives = 2;
     private static double _score = 0;
+    private static string _currentLevelName = null;
     private static Exception _lastException = null;
+    private static bool _loadFinished = false;
+    private static bool _presentationFinished = false;
 
     // == METHODS ======================================================================================
 
     public static void configureNewGame()
     {
-        _level = 1;
-        _lives = 2;
-        _score = 0;
+        level = 1;
+        lives = 2;
+        score = 0;
+        currentLevelName = null;
+        levelMap = null;
+        loadFinished = false;
+        presentationFinished = false;
+    }
+
+    public static void nextLevel()
+    {
+        level++;
+        currentLevelName = null;
+        levelMap = null;
+        loadFinished = false;
+        presentationFinished = false;
     }
 
     // == GETTERS AND SETTERS ======================================================================================
@@ -26,6 +43,23 @@ public static class SessionData
     {
         get { return _level; }
         set { _level = value; }
+    }
+
+    public static Tile[,] levelMap
+    {
+        get { return _levelMap; }
+        set { _levelMap = value; }
+    }
+
+    public static bool loadFinished
+    {
+        get { return _loadFinished; }
+        set { _loadFinished = value; }
+    }
+    public static bool presentationFinished
+    {
+        get { return _presentationFinished; }
+        set { _presentationFinished = value; }
     }
 
     public static int lives
@@ -38,6 +72,12 @@ public static class SessionData
     {
         get { return _score; }
         set { _score = value; }
+    }
+
+    public static string currentLevelName
+    {
+        get { return _currentLevelName; }
+        set { _currentLevelName = value; }
     }
 
     public static Exception lastException

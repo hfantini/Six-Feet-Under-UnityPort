@@ -21,10 +21,9 @@ public class ScriptGame : MonoBehaviour
     private int _tileSizeY;
     private int _totalTilesInX;
     private int _totalTilesInY;
-    private GameState _currentGameState = GameState.START;
+    private GameState _currentGameState = GameState.LEVEL_PRESENTATION;
     private int _levelDimX = 0;
     private int _levelDimY = 0;
-    private string _levelTitle = null;
     private int _originalLevelGems = -1;
     private int _levelGems = -1;
     private int _levelBombs = 0;
@@ -39,7 +38,6 @@ public class ScriptGame : MonoBehaviour
     private float _playerDiedTime = 0;
     private bool _tileMapSyncBeforeStateChange = false;
     private List<string> _levelRawMap = new List<string>();
-    private Tile[,] _levelMap = null;
     private List<Tile> _tileDynamicList = null;
     private List<Tile> _tileDynamicListForExclusion = null;
     private List<Tile> _tileDynamicListForAddition = null;
@@ -58,6 +56,8 @@ public class ScriptGame : MonoBehaviour
     private bool _transitionOutComplete = false;
     private List<List<GameObject>> _listOfAllObjectsTransition = null;
 
+    private GameObject _mainCamera = null;
+    private GameObject _loadingCamera = null;
     private GameObject _gamePanel = null;
     private GameObject _gameHud = null;
     private GameObject _gameStats = null;
@@ -74,7 +74,7 @@ public class ScriptGame : MonoBehaviour
     private Text _gameHudBomb;
 
     private AudioSource _musicSource;
-    private List<AudioSource> _soundFxSourceList;
+    private AudioSource _soundFxSource;
 
     private AudioClip _musicLevelClip = null;
     private AudioClip _sndFXBreak = null;
@@ -103,8 +103,8 @@ public class ScriptGame : MonoBehaviour
 
     protected enum GameState
     {
-        START,
         LEVEL_PRESENTATION,
+        LEVEL_START,
         PLAYING,
         PAUSE,
         EXIT_CONFIRM,
@@ -118,122 +118,76 @@ public class ScriptGame : MonoBehaviour
 
     public void playSoundFX( SoundFX soundFX )
     {
-        AudioSource availableSource = null;
-
-        foreach( AudioSource source in this._soundFxSourceList )
-        {
-            if(!source.isPlaying)
-            {
-                availableSource = source;
-                break;
-            }
-        }
-
-        // IF ALL SOURCES ARE PLAYING WE GET THE FIRST ONE FROM THE LIST AS CANDIDATE.
-
-        if(availableSource == null)
-        {
-            availableSource = this._soundFxSourceList[0];
-        }
-
-        switch( soundFX )
+        switch (soundFX)
         {
             case SoundFX.BREAK:
 
-                availableSource.clip = this._sndFXBreak;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXBreak);
                 break;
 
             case SoundFX.CHANGE:
 
-                availableSource.clip = this._sndFXChange;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXChange);
                 break;
 
             case SoundFX.CLOCK:
 
-                availableSource.clip = this._sndFXClock;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXClock);
                 break;
 
             case SoundFX.DIRT:
 
-                availableSource.clip = this._sndFXDirt;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXDirt);
                 break;
 
             case SoundFX.EXPLOSIN:
 
-                availableSource.clip = this._sndFXExplosin;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXExplosin);
                 break;
 
             case SoundFX.GATE:
 
-                availableSource.clip = this._sndFXGate;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXGate);
                 break;
 
             case SoundFX.GEM:
 
-                availableSource.clip = this._sndFXGem;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXGem);
                 break;
 
             case SoundFX.GRUNT:
 
-                availableSource.clip = this._sndFXGrunt;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXGrunt);
                 break;
 
             case SoundFX.HURRY:
 
-                availableSource.clip = this._sndFXHurry;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXHurry);
                 break;
 
             case SoundFX.LAVA:
 
-                availableSource.clip = this._sndFXLava;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXLava);
                 break;
 
             case SoundFX.NEWLIFE:
 
-                availableSource.clip = this._sndFXNewLife;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXNewLife);
                 break;
 
             case SoundFX.ROCKFALL:
 
-                availableSource.clip = this._sndFXRockFall;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXRockFall);
                 break;
 
             case SoundFX.SLOP:
 
-                availableSource.clip = this._sndFXSlop;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXSlop);
                 break;
 
             case SoundFX.SLURP:
 
-                availableSource.clip = this._sndFXSlurp;
-                availableSource.Play();
-
+                this._soundFxSource.PlayOneShot(this._sndFXSlurp);
                 break;
         }
     }
@@ -258,7 +212,7 @@ public class ScriptGame : MonoBehaviour
     public void setTilePosition(Tile tile, Vector2 newPos)
     {
         createTile("Empty", new Vector2(tile.position.x, tile.position.y));
-        this._levelMap[(int)newPos.y, (int)newPos.x] = tile;
+        SessionData.levelMap[(int)newPos.y, (int)newPos.x] = tile;
 
         tile.position = newPos;
     }
@@ -267,9 +221,9 @@ public class ScriptGame : MonoBehaviour
     {
         Tile retValue = null;
 
-        if ( ( pos.y >= 0 && pos.y < this._levelMap.GetLength(0) ) && ( pos.x >= 0 && pos.x < this._levelMap.GetLength(1) ) )
+        if ( ( pos.y >= 0 && pos.y < SessionData.levelMap.GetLength(0) ) && ( pos.x >= 0 && pos.x < SessionData.levelMap.GetLength(1) ) )
         {
-            retValue = this._levelMap[(int)pos.y, (int)pos.x];
+            retValue = SessionData.levelMap[(int)pos.y, (int)pos.x];
         }
 
         return retValue;
@@ -277,13 +231,13 @@ public class ScriptGame : MonoBehaviour
 
     public void deteleTileFromMap(Vector2 pos)
     {
-        this._levelMap[(int)pos.y, (int)pos.x] = null;
+        SessionData.levelMap[(int)pos.y, (int)pos.x] = null;
     }
 
     public void createTile(String tileClass, Vector2 pos)
     {
         Tile tile = (Tile)Activator.CreateInstance(Type.GetType(tileClass), new object[] { this, new Vector2(pos.x, pos.y) });
-        this._levelMap[(int)pos.y, (int)pos.x] = tile;
+        SessionData.levelMap[(int)pos.y, (int)pos.x] = tile;
 
         if (tile.type == Tile.TileType.TYPE_DYNAMIC)
         {
@@ -362,7 +316,7 @@ public class ScriptGame : MonoBehaviour
             {
                 case "TITLE":
 
-                    this._levelTitle = paramSplit[1];
+                    SessionData.currentLevelName = paramSplit[1];
                     break;
 
                 case "GEMS":
@@ -402,22 +356,22 @@ public class ScriptGame : MonoBehaviour
 
         // DEFINE THE CAMERA MODE
 
-        if (_levelMap.GetLength(0) <= this._gameAreaTileY && _levelMap.GetLength(1) <= this._gameAreaTileX)
+        if (SessionData.levelMap.GetLength(0) <= this._gameAreaTileY && SessionData.levelMap.GetLength(1) <= this._gameAreaTileX)
         {
             this._mapCameraMode = MapCameraMode.NO_SCROLL;
         }
-        else if (_levelMap.GetLength(0) > this._gameAreaTileY && _levelMap.GetLength(1) > this._gameAreaTileX)
+        else if (SessionData.levelMap.GetLength(0) > this._gameAreaTileY && SessionData.levelMap.GetLength(1) > this._gameAreaTileX)
         {
             this._mapCameraMode = MapCameraMode.X_Y_SCROLL;
         }
         else
         {
-            if (_levelMap.GetLength(0) > this._gameAreaTileY)
+            if (SessionData.levelMap.GetLength(0) > this._gameAreaTileY)
             {
                 this._mapCameraMode = MapCameraMode.Y_SCROLL;
             }
 
-            if (_levelMap.GetLength(1) > this._gameAreaTileX)
+            if (SessionData.levelMap.GetLength(1) > this._gameAreaTileX)
             {
                 this._mapCameraMode = MapCameraMode.X_SCROLL;
             }
@@ -427,8 +381,8 @@ public class ScriptGame : MonoBehaviour
 
         if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
         {
-            float tileAreaY = (this._levelMap.GetLength(0) - 1) * this._tileSizeY;
-            float tileAreaX = (this._levelMap.GetLength(1) - 1 ) * this._tileSizeX;
+            float tileAreaY = (SessionData.levelMap.GetLength(0) - 1) * this._tileSizeY;
+            float tileAreaX = (SessionData.levelMap.GetLength(1) - 1 ) * this._tileSizeX;
 
             float noUsedAreaY = gameAreaY - tileAreaY;
             float noUsedAreaX = gameAreaX - tileAreaX;
@@ -438,12 +392,12 @@ public class ScriptGame : MonoBehaviour
 
             // TOTAL TILES IN SCREEN
 
-            this._totalTilesInX = this._levelMap.GetLength(1);
-            this._totalTilesInY = this._levelMap.GetLength(0);
+            this._totalTilesInX = SessionData.levelMap.GetLength(1);
+            this._totalTilesInY = SessionData.levelMap.GetLength(0);
 
-            for (int countX = 0; countX < this._levelMap.GetLength(1); countX++)
+            for (int countX = 0; countX < SessionData.levelMap.GetLength(1); countX++)
             {
-                for (int countY = 0; countY < this._levelMap.GetLength(0); countY++)
+                for (int countY = 0; countY < SessionData.levelMap.GetLength(0); countY++)
                 {
                     GameObject obj = new GameObject();
                     obj.name = "TILE_" + countX + "_" + countY;
@@ -555,19 +509,19 @@ public class ScriptGame : MonoBehaviour
             // BORDER
             this._gameAreaOffsetX = (float)Math.Floor((Double)gameAreaX % (Double)this._tileSizeX) / 2;
 
-            int totalTileY = this._levelMap.GetLength(0) * this._tileSizeY;
+            int totalTileY = SessionData.levelMap.GetLength(0) * this._tileSizeY;
             this._gameAreaOffsetY = (float)Math.Floor(((Double)gameAreaX - (Double)totalTileY) / 2);
 
             // TOTAL TILES IN SCREEN
 
             this._totalTilesInX = (int) this._gameAreaTileX;
-            this._totalTilesInY = this._levelMap.GetLength(0);
+            this._totalTilesInY = SessionData.levelMap.GetLength(0);
 
             // TILE CREATION
 
             for (int countX = 0; countX < this._gameAreaTileX; countX++)
             {
-                for (int countY = 0; countY < this._levelMap.GetLength(0); countY++)
+                for (int countY = 0; countY < SessionData.levelMap.GetLength(0); countY++)
                 {
                     GameObject obj = new GameObject();
                     obj.name = "TILE_" + countX + "_" + countY;
@@ -609,19 +563,19 @@ public class ScriptGame : MonoBehaviour
 
             // BORDER
 
-            int totalTileX = this._levelMap.GetLength(1) * this._tileSizeX;
+            int totalTileX = SessionData.levelMap.GetLength(1) * this._tileSizeX;
             this._gameAreaOffsetX = (float)Math.Floor( ( (Double) gameAreaX - (Double) totalTileX) / 2);
 
             this._gameAreaOffsetY = (float)Math.Floor((Double)gameAreaY % (Double)this._tileSizeY) / 2;
 
             // TOTAL TILES IN SCREEN
 
-            this._totalTilesInX = this._levelMap.GetLength(1);
+            this._totalTilesInX = SessionData.levelMap.GetLength(1);
             this._totalTilesInY = (int)this._gameAreaTileY;
 
             // TILE CREATION
 
-            for (int countX = 0; countX < this._levelMap.GetLength(1); countX++)
+            for (int countX = 0; countX < SessionData.levelMap.GetLength(1); countX++)
             {
                 for (int countY = 0; countY < this._gameAreaTileY; countY++)
                 {
@@ -706,157 +660,160 @@ public class ScriptGame : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        // == OBJECT INITIALIZATION
+
+        this._tileDynamicList = new List<Tile>();
+        this._tileDynamicListForExclusion = new List<Tile>();
+        this._tileDynamicListForAddition = new List<Tile>();
+
+        // == WORKING WITH CAMERAS
+
+        this._mainCamera = GameObject.Find("CAMERA");
+        this._loadingCamera = GameObject.Find("CAMERA_LOADING");
+        
+        if(this._loadingCamera != null)
+        {
+            this._mainCamera.GetComponent<Camera>().enabled = false;
+            this._loadingCamera.GetComponent<Camera>().enabled = true;
+        }
+
+        // == LOAD DATA FROM LEVEL FILE
+
+        String[] lines = null;
+        TextAsset txtAsset = null;
+
+        if (SessionData.levelTest == false)
+        {
+            txtAsset = Resources.Load<TextAsset>("Levels/LEVEL" + SessionData.level);
+
+        }
+        else
+        {
+            txtAsset = Resources.Load<TextAsset>("Levels/LEVEL_TEST");
+        }
+
+        lines = txtAsset.text.Split('\n');
+
+        foreach (String line in lines)
+        {
+            parseLineFromTXT(line.Replace("\r", ""));
+        }
+
+        // == GETTING OBJECTS
+
+        this._gamePanel = GameObject.Find("PNL_GAME");
+        this._pnlControl = GameObject.Find("PNL_CONTROLS");
+        this._btnDropBomb = GameObject.Find("BTN_BOMB");
+        this._gameHud = GameObject.Find("PNL_HUD");
+        this._gameHudLevel = GameObject.Find("TXT_HUD_LEVEL").GetComponent<Text>();
+        this._gameHudGems = GameObject.Find("TXT_HUD_GEM").GetComponent<Text>();
+        this._gameHudMen = GameObject.Find("TXT_HUD_MEN").GetComponent<Text>();
+        this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
+        this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
+        this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
+        this._gameStats = GameObject.Find("PNL_INFO");
+        this._pnlOptions = GameObject.Find("PNL_OPTION");
+        this._pnlOptions.SetActive(false);
+        this._pnlConfirm = GameObject.Find("PNL_CONFIRM");
+        this._pnlConfirm.SetActive(false);
+        this._pnlPause = GameObject.Find("PNL_PAUSE");
+        this._pnlPause.SetActive(false);
+        this._musicSource = GameObject.Find("AUDIO_SOURCE").GetComponent<AudioSource>();
+        this._soundFxSource = GameObject.Find("SOUNDFX_SOURCE").GetComponent<AudioSource>();
+
+        // == SOUNDFX CLIPS
+
+        this._sndFXBreak = Resources.Load<AudioClip>("SoundFX/BREAK");
+        this._sndFXChange = Resources.Load<AudioClip>("SoundFX/CHANGE");
+        this._sndFXClock = Resources.Load<AudioClip>("SoundFX/CLOCK");
+        this._sndFXDirt = Resources.Load<AudioClip>("SoundFX/DIRT");
+        this._sndFXExplosin = Resources.Load<AudioClip>("SoundFX/EXPLOSIN");
+        this._sndFXGate = Resources.Load<AudioClip>("SoundFX/GATE");
+        this._sndFXGem = Resources.Load<AudioClip>("SoundFX/GEM");
+        this._sndFXGrunt = Resources.Load<AudioClip>("SoundFX/GRUNT");
+        this._sndFXHurry = Resources.Load<AudioClip>("SoundFX/HURRY");
+        this._sndFXLava = Resources.Load<AudioClip>("SoundFX/LAVA");
+        this._sndFXNewLife = Resources.Load<AudioClip>("SoundFX/NEWLIFE");
+        this._sndFXRockFall = Resources.Load<AudioClip>("SoundFX/ROCKFALL");
+        this._sndFXSlop = Resources.Load<AudioClip>("SoundFX/SLOP");
+        this._sndFXSlurp = Resources.Load<AudioClip>("SoundFX/SLURP");
+
+        // == SET MUSIC
+        this._musicSource.clip = this._musicLevelClip;
+
+        // == REMOVING OBJECTS
+        UnityEngine.Object.DestroyImmediate(GameObject.Find("PNL_TILE"));
+    }
+
     private void Start()
     {
-        try
+        // == PREPARE OBJECTS
+        this._musicSource.loop = true;
+
+        // == DEFINE PLATFORM VALUES
+        if(Application.platform == RuntimePlatform.Android)
         {
-            // == INITIALIZATION
-            this._tileDynamicList = new List<Tile>();
-            this._tileDynamicListForExclusion = new List<Tile>();
-            this._tileDynamicListForAddition = new List<Tile>();
-            this._soundFxSourceList = new List<AudioSource>();
-
-            // == GETTING OBJECTS
-            this._gamePanel = GameObject.Find("PNL_GAME");
-            this._pnlControl = GameObject.Find("PNL_CONTROLS");
-            this._btnDropBomb = GameObject.Find("BTN_BOMB");
-            this._gameHud = GameObject.Find("PNL_HUD");
-            this._gameHudLevel = GameObject.Find("TXT_HUD_LEVEL").GetComponent<Text>();
-            this._gameHudGems = GameObject.Find("TXT_HUD_GEM").GetComponent<Text>();
-            this._gameHudMen = GameObject.Find("TXT_HUD_MEN").GetComponent<Text>();
-            this._gameHudScore = GameObject.Find("TXT_HUD_SCORE").GetComponent<Text>();
-            this._gameHudTime = GameObject.Find("TXT_HUD_TIME").GetComponent<Text>();
-            this._gameHudBomb = GameObject.Find("TXT_HUD_BOMB").GetComponent<Text>();
-            this._gameStats = GameObject.Find("PNL_INFO");
-            this._pnlOptions = GameObject.Find("PNL_OPTION");
-            this._pnlOptions.SetActive(false);
-            this._pnlConfirm = GameObject.Find("PNL_CONFIRM");
-            this._pnlConfirm.SetActive(false);
-            this._pnlPause = GameObject.Find("PNL_PAUSE");
-            this._pnlPause.SetActive(false);
-            this._musicSource = GameObject.Find("MUSIC_AUDIO_SOURCE").GetComponent<AudioSource>();
-            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_1").GetComponent<AudioSource>() );
-            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_2").GetComponent<AudioSource>() );
-            this._soundFxSourceList.Add( GameObject.Find("SOUNDFX_AUDIO_SOURCE_3").GetComponent<AudioSource>() );
-
-            // == PREPARE OBJECTS
-            this._musicSource.loop = true;
-
-            foreach (AudioSource source in this._soundFxSourceList)
-            {
-                source.loop = false;
-            }
-
-            // == DEFINE PLATFORM VALUES
-            if(Application.platform == RuntimePlatform.Android)
-            {
-                this._tileSizeX = 128;
-                this._tileSizeY = 128;
+            this._tileSizeX = 128;
+            this._tileSizeY = 128;
     
-                this._pnlControl.SetActive(true);
-            }
-            else
+            this._pnlControl.SetActive(true);
+        }
+        else
+        {
+            this._tileSizeX = 64;
+            this._tileSizeY = 64;
+
+            this._pnlControl.SetActive(false);
+        }
+
+        // == CALC MAP DIMENSIONS
+
+        if (this._levelRawMap.Count > 0)
+        {
+            this._levelDimX = this._levelRawMap[0].Length / 2;
+            this._levelDimY = this._levelRawMap.Count;
+
+            SessionData.levelMap = new Tile[this._levelDimY, this._levelDimX];
+        }
+
+        // == INITIALIZING MAP OBJECTS
+
+        for (int countY = 0; countY < this._levelRawMap.Count; countY++)
+        {
+            int mapXCounter = 0;
+
+            for (int countX = 0; countX < this._levelRawMap[countY].Length; countX += 2)
             {
-                this._tileSizeX = 64;
-                this._tileSizeY = 64;
+                string code = this._levelRawMap[countY].Substring(countX, 2);
+                Type tileType = TileUtil.decodeClassFromTileCode(code);
 
-                this._pnlControl.SetActive(false);
-            }
-
-
-            // == LOAD DATA FROM LEVEL FILE
-            String[] lines = null;
-            TextAsset txtAsset = null;
-
-            if (SessionData.levelTest == false)
-            {
-                txtAsset = Resources.Load<TextAsset>("Levels/LEVEL" + SessionData.level);
-                
-            }
-            else
-            {
-                txtAsset = Resources.Load<TextAsset>("Levels/LEVEL_TEST");
-            }
-
-            lines = txtAsset.text.Split('\n');
-
-            foreach( String line in lines)
-            {
-                parseLineFromTXT( line.Replace("\r", "") );
-            }
-
-            // == SOUNDFX CLIPS
-
-            this._sndFXBreak = Resources.Load<AudioClip>("SoundFX/BREAK");
-            this._sndFXChange = Resources.Load<AudioClip>("SoundFX/CHANGE");
-            this._sndFXClock = Resources.Load<AudioClip>("SoundFX/CLOCK");
-            this._sndFXDirt = Resources.Load<AudioClip>("SoundFX/DIRT");
-            this._sndFXExplosin = Resources.Load<AudioClip>("SoundFX/EXPLOSIN");
-            this._sndFXGate = Resources.Load<AudioClip>("SoundFX/GATE");
-            this._sndFXGem = Resources.Load<AudioClip>("SoundFX/GEM");
-            this._sndFXGrunt = Resources.Load<AudioClip>("SoundFX/GRUNT");
-            this._sndFXHurry = Resources.Load<AudioClip>("SoundFX/HURRY");
-            this._sndFXLava = Resources.Load<AudioClip>("SoundFX/LAVA");
-            this._sndFXNewLife = Resources.Load<AudioClip>("SoundFX/NEWLIFE");
-            this._sndFXRockFall = Resources.Load<AudioClip>("SoundFX/ROCKFALL");
-            this._sndFXSlop = Resources.Load<AudioClip>("SoundFX/SLOP");
-            this._sndFXSlurp = Resources.Load<AudioClip>("SoundFX/SLURP");
-
-            // == SET MUSIC
-            this._musicSource.clip = this._musicLevelClip;
-
-            // == CALC MAP DIMENSIONS
-
-            if (this._levelRawMap.Count > 0)
-            {
-                this._levelDimX = this._levelRawMap[0].Length / 2;
-                this._levelDimY = this._levelRawMap.Count;
-
-                this._levelMap = new Tile[this._levelDimY, this._levelDimX];
-            }
-
-            // == INITIALIZING MAP OBJECTS
-
-            for (int countY = 0; countY < this._levelRawMap.Count; countY++)
-            {
-                int mapXCounter = 0;
-
-                for (int countX = 0; countX < this._levelRawMap[countY].Length; countX += 2)
+                if (tileType != null)
                 {
-                    string code = this._levelRawMap[countY].Substring(countX, 2);
-                    Type tileType = TileUtil.decodeClassFromTileCode(code);
+                    Tile currentTile = (Tile)Activator.CreateInstance(tileType, new object[] { this, new Vector2(mapXCounter, countY) });
+                    SessionData.levelMap[countY, mapXCounter] = currentTile;
 
-                    if (tileType != null)
+                    // TRACKING SOME OBJECTS IN LISTS
+
+                    if (currentTile.type == Tile.TileType.TYPE_DYNAMIC)
                     {
-                        Tile currentTile = (Tile)Activator.CreateInstance(tileType, new object[] { this, new Vector2(mapXCounter, countY) });
-                        this._levelMap[countY, mapXCounter] = currentTile;
+                        this._tileDynamicList.Add(currentTile);
 
-                        // TRACKING SOME OBJECTS IN LISTS
-
-                        if (currentTile.type == Tile.TileType.TYPE_DYNAMIC)
+                        if (currentTile is Player)
                         {
-                            this._tileDynamicList.Add(currentTile);
-
-                            if (currentTile is Player)
-                            {
-                                this._tilePlayer = currentTile;
-                            }
+                            this._tilePlayer = currentTile;
                         }
-
-                        mapXCounter++;
                     }
+
+                    mapXCounter++;
                 }
             }
-
-            // == WORKING ON GAME PANEL
-
-            prepareGamePanel();
         }
-        catch (Exception e)
-        {
-            SessionData.lastException = e;
-            SceneManager.LoadScene("SCENE_EXCEPTION");
-        }
+
+        // == WORKING ON GAME PANEL
+
+        prepareGamePanel();
     }
 
     private bool applyTransitionSceneOut()
@@ -995,13 +952,20 @@ public class ScriptGame : MonoBehaviour
 
     private void Update()
     {
-        if (_currentGameState == GameState.START)
+        if (_currentGameState == GameState.LEVEL_PRESENTATION)
+        {
+            SessionData.loadFinished = true;
+
+            if(SessionData.presentationFinished)
+            {
+                UnityEngine.Object.Destroy(GameObject.Find("CAMERA_LOADING"));
+                this._currentGameState = GameState.LEVEL_START;
+                this._mainCamera.GetComponent<Camera>().enabled = true;
+            }
+        }
+        else if( _currentGameState == GameState.LEVEL_START )
         {
             this._playerDiedTime = 0;
-            this._currentGameState = GameState.LEVEL_PRESENTATION;
-        }
-        else if (_currentGameState == GameState.LEVEL_PRESENTATION)
-        {
             this._musicSource.Play();
             this._currentGameState = GameState.PLAYING;
         }
@@ -1041,11 +1005,11 @@ public class ScriptGame : MonoBehaviour
 
             if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
             {
-                for (int countY = 0; countY < _levelMap.GetLength(0); countY++)
+                for (int countY = 0; countY < SessionData.levelMap.GetLength(0); countY++)
                 {
-                    for (int countX = 0; countX < _levelMap.GetLength(1); countX++)
+                    for (int countX = 0; countX < SessionData.levelMap.GetLength(1); countX++)
                     {
-                        Tile currentTile = _levelMap[countY, countX];
+                        Tile currentTile = SessionData.levelMap[countY, countX];
                         GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + countY);
 
                         if (currentTile != null)
@@ -1085,10 +1049,10 @@ public class ScriptGame : MonoBehaviour
                     startPosX = 0;
                     endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
                 }
-                else if (playerPos.x + this._scrollOffsetX.y > (this._levelMap.GetLength(1) - 1))
+                else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
                 {
-                    startPosX = (this._levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                    endPosX = (this._levelMap.GetLength(1) - 1);
+                    startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                    endPosX = (SessionData.levelMap.GetLength(1) - 1);
                 }
                 else
                 {
@@ -1103,10 +1067,10 @@ public class ScriptGame : MonoBehaviour
                     startPosY = 0;
                     endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
                 }
-                else if (playerPos.y + this._scrollOffsetY.y > (this._levelMap.GetLength(0) - 1))
+                else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
                 {
-                    startPosY = (this._levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                    endPosY = (this._levelMap.GetLength(0) - 1);
+                    startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                    endPosY = (SessionData.levelMap.GetLength(0) - 1);
                 }
                 else
                 {
@@ -1118,7 +1082,7 @@ public class ScriptGame : MonoBehaviour
                 {
                     for (int countX = startPosX; countX <= endPosX; countX++)
                     {
-                        Tile currentTile = _levelMap[countY, countX];
+                        Tile currentTile = SessionData.levelMap[countY, countX];
                         GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + (countY - startPosY));
 
                         if (currentTile != null)
@@ -1156,10 +1120,10 @@ public class ScriptGame : MonoBehaviour
                     startPosX = 0;
                     endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
                 }
-                else if (playerPos.x + this._scrollOffsetX.y > (this._levelMap.GetLength(1) - 1))
+                else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
                 {
-                    startPosX = (this._levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                    endPosX = (this._levelMap.GetLength(1) - 1);
+                    startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                    endPosX = (SessionData.levelMap.GetLength(1) - 1);
                 }
                 else
                 {
@@ -1167,11 +1131,11 @@ public class ScriptGame : MonoBehaviour
                     endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
                 }
 
-                for (int countY = 0; countY <= this._levelMap.GetLength(0) - 1; countY++)
+                for (int countY = 0; countY <= SessionData.levelMap.GetLength(0) - 1; countY++)
                 {
                     for (int countX = startPosX; countX <= endPosX; countX++)
                     {
-                        Tile currentTile = _levelMap[countY, countX];
+                        Tile currentTile = SessionData.levelMap[countY, countX];
                         GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + countY);
 
                         if (currentTile != null)
@@ -1209,10 +1173,10 @@ public class ScriptGame : MonoBehaviour
                     startPosY = 0;
                     endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
                 }
-                else if (playerPos.y + this._scrollOffsetY.y > (this._levelMap.GetLength(0) - 1))
+                else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
                 {
-                    startPosY = (this._levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                    endPosY = (this._levelMap.GetLength(0) - 1);
+                    startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                    endPosY = (SessionData.levelMap.GetLength(0) - 1);
                 }
                 else
                 {
@@ -1222,9 +1186,9 @@ public class ScriptGame : MonoBehaviour
 
                 for (int countY = startPosY; countY <= endPosY; countY++)
                 {
-                    for (int countX = 0; countX <= this._levelMap.GetLength(1) - 1; countX++)
+                    for (int countX = 0; countX <= SessionData.levelMap.GetLength(1) - 1; countX++)
                     {
-                        Tile currentTile = _levelMap[countY, countX];
+                        Tile currentTile = SessionData.levelMap[countY, countX];
                         GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + (countY - startPosY));
 
                         if (currentTile != null)
@@ -1306,7 +1270,7 @@ public class ScriptGame : MonoBehaviour
             // == UPDATING HUD
 
             // LEVEL
-            this._gameHudLevel.text = "LEVEL " + SessionData.level + " - " + this._levelTitle;
+            this._gameHudLevel.text = "LEVEL " + SessionData.level + " - " + SessionData.currentLevelName;
 
             // GEMS
             this._gameHudGems.text = this._levelGems.ToString();
@@ -1447,7 +1411,7 @@ public class ScriptGame : MonoBehaviour
             {
                 if (!applyTransitionSceneOut())
                 {
-                    SessionData.level++;
+                    SessionData.nextLevel();
                     SceneManager.LoadScene("SCENE_LOADING");
                 }
             }
