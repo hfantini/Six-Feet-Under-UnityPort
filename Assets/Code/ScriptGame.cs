@@ -73,6 +73,12 @@ public class ScriptGame : MonoBehaviour
     private Text _gameHudScore;
     private Text _gameHudBomb;
 
+    // TUTORIALS
+    private GameObject _pnlTutorial = null;
+    private GameObject _pnlTutorial1 = null;
+    private GameObject _pnlTutorial8 = null;
+    private GameObject _pnlTutorial10 = null;
+
     private AudioSource _musicSource;
     private AudioSource _soundFxSource;
 
@@ -105,6 +111,7 @@ public class ScriptGame : MonoBehaviour
     {
         LEVEL_PRESENTATION,
         LEVEL_START,
+        LEVEL_TUTORIAL,
         PLAYING,
         PAUSE,
         EXIT_CONFIRM,
@@ -723,6 +730,48 @@ public class ScriptGame : MonoBehaviour
         this._musicSource = GameObject.Find("AUDIO_SOURCE").GetComponent<AudioSource>();
         this._soundFxSource = GameObject.Find("SOUNDFX_SOURCE").GetComponent<AudioSource>();
 
+        // == TUTORIALS
+
+        // 1
+
+        this._pnlTutorial1 = GameObject.Find("PNL_TUTORIAL_1");
+
+        if(Application.platform == RuntimePlatform.Android)
+        {
+            GameObject.Find("PNL_INPUT_PC").SetActive(false);
+        }
+        else
+        {
+            GameObject.Find("PNL_INPUT_MOBILE").SetActive(false);
+        }
+
+        this._pnlTutorial1.SetActive(false);
+
+        // 8
+
+        this._pnlTutorial8 = GameObject.Find("PNL_TUTORIAL_8");
+
+        if (Application.platform == RuntimePlatform.Android)
+        {
+            GameObject.Find("PNL_TUTORIAL_BOMB_PC").SetActive(false);
+        }
+        else
+        {
+            GameObject.Find("PNL_TUTORIAL_BOMB_MOBILE").SetActive(false);
+        }
+
+        this._pnlTutorial8.SetActive(false);
+
+        // 10
+
+        this._pnlTutorial10 = GameObject.Find("PNL_TUTORIAL_10");
+        this._pnlTutorial10.SetActive(false);
+
+        // TUTORIAL PANEL
+
+        this._pnlTutorial = GameObject.Find("PNL_TUTORIAL");
+        this._pnlTutorial.SetActive(false);
+
         // == SOUNDFX CLIPS
 
         this._sndFXBreak = Resources.Load<AudioClip>("SoundFX/BREAK");
@@ -949,6 +998,250 @@ public class ScriptGame : MonoBehaviour
 
         return retValue;
     }
+    private void updateGameView()
+    {
+        if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
+        {
+            for (int countY = 0; countY < SessionData.levelMap.GetLength(0); countY++)
+            {
+                for (int countX = 0; countX < SessionData.levelMap.GetLength(1); countX++)
+                {
+                    Tile currentTile = SessionData.levelMap[countY, countX];
+                    GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + countY);
+
+                    if (currentTile != null)
+                    {
+                        // UPDATING TILE FACE DIRECTION
+
+                        updateTileDirection(currentTile, gameTile);
+
+                        // UPDATING TILE IMAGE
+
+                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = currentTile.sprite;
+                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                    }
+                    else
+                    {
+                        // EMPTY TILE
+
+                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = null;
+                        GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                    }
+                }
+            }
+        }
+        else if (this._mapCameraMode == MapCameraMode.X_Y_SCROLL)
+        {
+            Vector2 playerPos = this._tilePlayer.position;
+
+            int startPosX = 0;
+            int startPosY = 0;
+            int endPosX = 0;
+            int endPosY = 0;
+
+            // X
+
+            if (playerPos.x - this._scrollOffsetX.x < 0)
+            {
+                startPosX = 0;
+                endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+            }
+            else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
+            {
+                startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                endPosX = (SessionData.levelMap.GetLength(1) - 1);
+            }
+            else
+            {
+                startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
+                endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
+            }
+
+            // Y
+
+            if (playerPos.y - this._scrollOffsetY.x < 0)
+            {
+                startPosY = 0;
+                endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+            }
+            else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
+            {
+                startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                endPosY = (SessionData.levelMap.GetLength(0) - 1);
+            }
+            else
+            {
+                startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
+                endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
+            }
+
+            for (int countY = startPosY; countY <= endPosY; countY++)
+            {
+                for (int countX = startPosX; countX <= endPosX; countX++)
+                {
+                    Tile currentTile = SessionData.levelMap[countY, countX];
+                    GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + (countY - startPosY));
+
+                    if (currentTile != null)
+                    {
+                        // UPDATING TILE FACE DIRECTION
+
+                        updateTileDirection(currentTile, gameTile);
+
+                        // UPDATING TILE IMAGE
+
+                        gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                        gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                    }
+                    else
+                    {
+                        // EMPTY TILE
+
+                        gameTile.GetComponent<Image>().sprite = null;
+                        gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                    }
+                }
+            }
+        }
+        else if (this._mapCameraMode == MapCameraMode.X_SCROLL)
+        {
+            Vector2 playerPos = this._tilePlayer.position;
+
+            int startPosX = 0;
+            int endPosX = 0;
+
+            // X
+
+            if (playerPos.x - this._scrollOffsetX.x < 0)
+            {
+                startPosX = 0;
+                endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+            }
+            else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
+            {
+                startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
+                endPosX = (SessionData.levelMap.GetLength(1) - 1);
+            }
+            else
+            {
+                startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
+                endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
+            }
+
+            for (int countY = 0; countY <= SessionData.levelMap.GetLength(0) - 1; countY++)
+            {
+                for (int countX = startPosX; countX <= endPosX; countX++)
+                {
+                    Tile currentTile = SessionData.levelMap[countY, countX];
+                    GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + countY);
+
+                    if (currentTile != null)
+                    {
+                        // UPDATING TILE FACE DIRECTION
+
+                        updateTileDirection(currentTile, gameTile);
+
+                        // UPDATING TILE IMAGE
+
+                        gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                        gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                    }
+                    else
+                    {
+                        // EMPTY TILE
+
+                        gameTile.GetComponent<Image>().sprite = null;
+                        gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                    }
+                }
+            }
+        }
+        else if (this._mapCameraMode == MapCameraMode.Y_SCROLL)
+        {
+            Vector2 playerPos = this._tilePlayer.position;
+
+            int startPosY = 0;
+            int endPosY = 0;
+
+            // Y
+
+            if (playerPos.y - this._scrollOffsetY.x < 0)
+            {
+                startPosY = 0;
+                endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+            }
+            else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
+            {
+                startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
+                endPosY = (SessionData.levelMap.GetLength(0) - 1);
+            }
+            else
+            {
+                startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
+                endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
+            }
+
+            for (int countY = startPosY; countY <= endPosY; countY++)
+            {
+                for (int countX = 0; countX <= SessionData.levelMap.GetLength(1) - 1; countX++)
+                {
+                    Tile currentTile = SessionData.levelMap[countY, countX];
+                    GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + (countY - startPosY));
+
+                    if (currentTile != null)
+                    {
+                        // UPDATING TILE FACE DIRECTION
+
+                        updateTileDirection(currentTile, gameTile);
+
+                        // UPDATING TILE IMAGE
+
+                        gameTile.GetComponent<Image>().sprite = currentTile.sprite;
+                        gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
+                    }
+                    else
+                    {
+                        // EMPTY TILE
+
+                        gameTile.GetComponent<Image>().sprite = null;
+                        gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
+                    }
+                }
+            }
+        }
+    }
+    private void updateGameHud()
+    {
+        // LEVEL
+        this._gameHudLevel.text = "LEVEL " + SessionData.level + " - " + SessionData.currentLevelName;
+
+        // GEMS
+        this._gameHudGems.text = this._levelGems.ToString();
+
+        // LIVES
+        this._gameHudMen.text = SessionData.lives.ToString();
+
+        // SCORE
+        this._gameHudScore.text = SessionData.score.ToString();
+
+        // BOMBS
+        this._gameHudBomb.text = this._levelBombs.ToString();
+
+        if (this._levelBombs > 0)
+        {
+            this._btnDropBomb.SetActive(true);
+        }
+        else
+        {
+            this._btnDropBomb.SetActive(false);
+        }
+
+        // TIME
+        if (this._levelTime >= 0)
+        {
+            this._gameHudTime.text = this._levelTime.ToString();
+        }
+    }
 
     private void Update()
     {
@@ -967,7 +1260,33 @@ public class ScriptGame : MonoBehaviour
         {
             this._playerDiedTime = 0;
             this._musicSource.Play();
-            this._currentGameState = GameState.PLAYING;
+            this._currentGameState = GameState.LEVEL_TUTORIAL;
+        }
+        else if (_currentGameState == GameState.LEVEL_TUTORIAL)
+        {
+            updateGameView();
+            updateGameHud();
+
+            // CHECK FOR TUTORIALS
+            if (SessionData.level == 1)
+            {
+                this._pnlTutorial.SetActive(true);
+                this._pnlTutorial1.SetActive(true);
+            }
+            else if (SessionData.level == 8)
+            {
+                this._pnlTutorial.SetActive(true);
+                this._pnlTutorial8.SetActive(true);
+            }
+            else if (SessionData.level == 10)
+            {
+                this._pnlTutorial.SetActive(true);
+                this._pnlTutorial10.SetActive(true);
+            }
+            else
+            {
+                this._currentGameState = GameState.PLAYING;
+            }
         }
         else if (_currentGameState == GameState.PLAYING)
         {
@@ -1002,216 +1321,8 @@ public class ScriptGame : MonoBehaviour
             }
 
             // UPDATING GAME VIEW
+            updateGameView();
 
-            if (this._mapCameraMode == MapCameraMode.NO_SCROLL)
-            {
-                for (int countY = 0; countY < SessionData.levelMap.GetLength(0); countY++)
-                {
-                    for (int countX = 0; countX < SessionData.levelMap.GetLength(1); countX++)
-                    {
-                        Tile currentTile = SessionData.levelMap[countY, countX];
-                        GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + countY);
-
-                        if (currentTile != null)
-                        {
-                            // UPDATING TILE FACE DIRECTION
-
-                            updateTileDirection(currentTile, gameTile);
-
-                            // UPDATING TILE IMAGE
-
-                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = currentTile.sprite;
-                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(255, 255, 255, 255);
-                        }
-                        else
-                        {
-                            // EMPTY TILE
-
-                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().sprite = null;
-                            GameObject.Find("TILE_" + countX + "_" + countY).GetComponent<Image>().color = new Color32(0, 0, 0, 255);
-                        }
-                    }
-                }
-            }
-            else if (this._mapCameraMode == MapCameraMode.X_Y_SCROLL)
-            {
-                Vector2 playerPos = this._tilePlayer.position;
-
-                int startPosX = 0;
-                int startPosY = 0;
-                int endPosX = 0;
-                int endPosY = 0;
-
-                // X
-
-                if (playerPos.x - this._scrollOffsetX.x < 0)
-                {
-                    startPosX = 0;
-                    endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                }
-                else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
-                {
-                    startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                    endPosX = (SessionData.levelMap.GetLength(1) - 1);
-                }
-                else
-                {
-                    startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
-                    endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
-                }
-
-                // Y
-
-                if (playerPos.y - this._scrollOffsetY.x < 0)
-                {
-                    startPosY = 0;
-                    endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                }
-                else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
-                {
-                    startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                    endPosY = (SessionData.levelMap.GetLength(0) - 1);
-                }
-                else
-                {
-                    startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
-                    endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
-                }
-
-                for (int countY = startPosY; countY <= endPosY; countY++)
-                {
-                    for (int countX = startPosX; countX <= endPosX; countX++)
-                    {
-                        Tile currentTile = SessionData.levelMap[countY, countX];
-                        GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + (countY - startPosY));
-
-                        if (currentTile != null)
-                        {
-                            // UPDATING TILE FACE DIRECTION
-
-                            updateTileDirection(currentTile, gameTile);
-
-                            // UPDATING TILE IMAGE
-
-                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
-                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
-                        }
-                        else
-                        {
-                            // EMPTY TILE
-
-                            gameTile.GetComponent<Image>().sprite = null;
-                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
-                        }
-                    }
-                }
-            }
-            else if (this._mapCameraMode == MapCameraMode.X_SCROLL)
-            {
-                Vector2 playerPos = this._tilePlayer.position;
-
-                int startPosX = 0;
-                int endPosX = 0;
-
-                // X
-
-                if (playerPos.x - this._scrollOffsetX.x < 0)
-                {
-                    startPosX = 0;
-                    endPosX = (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                }
-                else if (playerPos.x + this._scrollOffsetX.y > (SessionData.levelMap.GetLength(1) - 1))
-                {
-                    startPosX = (SessionData.levelMap.GetLength(1) - 1) - (int)(this._scrollOffsetX.x + this._scrollOffsetX.y);
-                    endPosX = (SessionData.levelMap.GetLength(1) - 1);
-                }
-                else
-                {
-                    startPosX = (int)(playerPos.x - this._scrollOffsetX.x);
-                    endPosX = (int)(playerPos.x + this._scrollOffsetX.y);
-                }
-
-                for (int countY = 0; countY <= SessionData.levelMap.GetLength(0) - 1; countY++)
-                {
-                    for (int countX = startPosX; countX <= endPosX; countX++)
-                    {
-                        Tile currentTile = SessionData.levelMap[countY, countX];
-                        GameObject gameTile = GameObject.Find("TILE_" + (countX - startPosX) + "_" + countY);
-
-                        if (currentTile != null)
-                        {
-                            // UPDATING TILE FACE DIRECTION
-
-                            updateTileDirection(currentTile, gameTile);
-
-                            // UPDATING TILE IMAGE
-
-                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
-                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
-                        }
-                        else
-                        {
-                            // EMPTY TILE
-
-                            gameTile.GetComponent<Image>().sprite = null;
-                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
-                        }
-                    }
-                }
-            }
-            else if (this._mapCameraMode == MapCameraMode.Y_SCROLL)
-            {
-                Vector2 playerPos = this._tilePlayer.position;
-
-                int startPosY = 0;
-                int endPosY = 0;
-
-                // Y
-
-                if (playerPos.y - this._scrollOffsetY.x < 0)
-                {
-                    startPosY = 0;
-                    endPosY = (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                }
-                else if (playerPos.y + this._scrollOffsetY.y > (SessionData.levelMap.GetLength(0) - 1))
-                {
-                    startPosY = (SessionData.levelMap.GetLength(0) - 1) - (int)(this._scrollOffsetY.x + this._scrollOffsetY.y);
-                    endPosY = (SessionData.levelMap.GetLength(0) - 1);
-                }
-                else
-                {
-                    startPosY = (int)(playerPos.y - this._scrollOffsetY.x);
-                    endPosY = (int)(playerPos.y + this._scrollOffsetY.y);
-                }
-
-                for (int countY = startPosY; countY <= endPosY; countY++)
-                {
-                    for (int countX = 0; countX <= SessionData.levelMap.GetLength(1) - 1; countX++)
-                    {
-                        Tile currentTile = SessionData.levelMap[countY, countX];
-                        GameObject gameTile = GameObject.Find("TILE_" + countX + "_" + (countY - startPosY));
-
-                        if (currentTile != null)
-                        {
-                            // UPDATING TILE FACE DIRECTION
-
-                            updateTileDirection(currentTile, gameTile);
-
-                            // UPDATING TILE IMAGE
-
-                            gameTile.GetComponent<Image>().sprite = currentTile.sprite;
-                            gameTile.GetComponent<Image>().color = new Color32(255, 255, 255, 255);
-                        }
-                        else
-                        {
-                            // EMPTY TILE
-
-                            gameTile.GetComponent<Image>().sprite = null;
-                            gameTile.GetComponent<Image>().color = new Color32(0, 0, 0, 255);
-                        }
-                    }
-                }
-            }
 
             // == CHECKING FOR PLAYER LIFE STATUS
             if (this._playerDied)
@@ -1269,35 +1380,7 @@ public class ScriptGame : MonoBehaviour
 
             // == UPDATING HUD
 
-            // LEVEL
-            this._gameHudLevel.text = "LEVEL " + SessionData.level + " - " + SessionData.currentLevelName;
-
-            // GEMS
-            this._gameHudGems.text = this._levelGems.ToString();
-
-            // LIVES
-            this._gameHudMen.text = SessionData.lives.ToString();
-
-            // SCORE
-            this._gameHudScore.text = SessionData.score.ToString();
-
-            // BOMBS
-            this._gameHudBomb.text = this._levelBombs.ToString();
-
-            if(this._levelBombs > 0)
-            {
-                this._btnDropBomb.SetActive(true);
-            }
-            else
-            {
-                this._btnDropBomb.SetActive(false);
-            }
-
-            // TIME
-            if (this._levelTime >= 0)
-            {
-                this._gameHudTime.text = this._levelTime.ToString();
-            }
+            updateGameHud();
 
             // CHECKING FOR PAUSE
             if( Input.GetKeyDown(KeyCode.Escape) )
@@ -1419,6 +1502,16 @@ public class ScriptGame : MonoBehaviour
     }
 
     // == EVENTS =============================================================================================================
+
+    public void onTutorialOkPress()
+    {
+        if (this._currentGameState == GameState.LEVEL_TUTORIAL)
+        {
+            this._pnlTutorial.SetActive(false);
+            this._currentGameState = GameState.PLAYING;
+        }
+    }
+
     public void onBombClick()
     {
         ((Player)this._tilePlayer).playerControls.triggerBomb();
