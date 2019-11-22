@@ -18,6 +18,12 @@ EditorBuildSettings:
     path: Assets/Scenes/SCENE_GAME.unity
     guid: 21b29e5d9c7fa284f872a50eb931862b
   - enabled: 1
+    path: Assets/Scenes/SCENE_GAMEOVER.unity
+    guid: a2af71e38efab454ea1d93de32024afa
+  - enabled: 1
+    path: Assets/Scenes/SCENE_GAMEWIN.unity
+    guid: e96fcd2f8f15d4c42838f60c15562b95
+  - enabled: 1
     path: Assets/Scenes/SCENE_EXCEPTION.unity
     guid: bdedcaf77b076c2489afb85316a1db35
   m_configObjects: {}

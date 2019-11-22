@@ -358,6 +358,9 @@ public class ScriptGame : MonoBehaviour
         float gameAreaX = this._gamePanel.GetComponent<RectTransform>().rect.width;
         float gameAreaY = this._gamePanel.GetComponent<RectTransform>().rect.height;
 
+        this._tileSizeX = (int)gameAreaX / 25;
+        this._tileSizeY = (int)gameAreaX / 25;
+
         this._gameAreaTileX = (float)Math.Floor((Double)gameAreaX / (Double)this._tileSizeX);
         this._gameAreaTileY = (float)Math.Floor((Double)gameAreaY / (Double)this._tileSizeY);
 
@@ -802,18 +805,15 @@ public class ScriptGame : MonoBehaviour
         this._musicSource.loop = true;
 
         // == DEFINE PLATFORM VALUES
+
+        float dpi = Screen.dpi;
+
         if(Application.platform == RuntimePlatform.Android)
         {
-            this._tileSizeX = 128;
-            this._tileSizeY = 128;
-    
             this._pnlControl.SetActive(true);
         }
         else
         {
-            this._tileSizeX = 64;
-            this._tileSizeY = 64;
-
             this._pnlControl.SetActive(false);
         }
 
@@ -1430,7 +1430,7 @@ public class ScriptGame : MonoBehaviour
             {
                 if (!applyTransitionSceneOut())
                 {
-                    SceneManager.LoadScene("SCENE_MENU");
+                    SceneManager.LoadScene("SCENE_GAMEOVER");
                 }
             }
         }
@@ -1494,8 +1494,15 @@ public class ScriptGame : MonoBehaviour
             {
                 if (!applyTransitionSceneOut())
                 {
-                    SessionData.nextLevel();
-                    SceneManager.LoadScene("SCENE_LOADING");
+                    if (SessionData.level < 25)
+                    {
+                        SessionData.nextLevel();
+                        SceneManager.LoadScene("SCENE_LOADING");
+                    }
+                    else
+                    {
+                        SceneManager.LoadScene("SCENE_GAMEWIN");
+                    }
                 }
             }
         }

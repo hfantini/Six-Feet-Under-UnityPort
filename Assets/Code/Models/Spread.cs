@@ -7,7 +7,7 @@ public class Spread : Tile
     // == VAR & CONST ========================================================================================================
 
     protected float _movementDelay = 150;
-    protected float _lastMovement = 0;
+    protected float _lastMovement = -1;
     protected TileMovementDirection _currentMovementDirection = TileMovementDirection.RIGHT;
 
     // == METHODS ============================================================================================================
@@ -15,12 +15,16 @@ public class Spread : Tile
     public Spread(ScriptGame parent, Vector2 initialPos) : base(parent, initialPos)
     {
         this._type = TileType.TYPE_DYNAMIC;
-        this._lastMovement = Time.time * 1000;
     }
 
     public override void update()
     {
         base.update();
+
+        if(this._lastMovement == -1)
+        {
+            this._lastMovement = Time.time * 1000;
+        }
 
         if( (Time.time * 1000) - this._lastMovement > this._movementDelay )
         {
