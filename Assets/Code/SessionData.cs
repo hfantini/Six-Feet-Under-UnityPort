@@ -5,7 +5,7 @@ using UnityEngine;
 
 public static class SessionData
 {
-    private static int _level = 16;
+    private static int _level = 1;
     private static Tile[,] _levelMap = null;
     private static bool _levelTest = false;
     private static int _lives = 2;
